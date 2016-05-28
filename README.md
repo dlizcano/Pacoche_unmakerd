@@ -1,4 +1,5 @@
-# Pacoche con unmakerd
-Analisis de ocupacion para Pacoche con Unmarked.
+# Pacoche con unmarked
+
+Analisis de ocupacion para los datos de Pacoche con Unmarked.
 Manuscrito revista ecosistemas
- version a evaluadores1
+version a evaluadores1
