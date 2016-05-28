@@ -1,0 +1,15 @@
+
+modSel(models)
+                         nPars    AIC delta  AICwt cumltvWt
+p(canopy_c)psi(dist_def)     4 205.27  0.00 0.4757     0.48
+p(canopy_c)psi(slope)        4 207.37  2.10 0.1661     0.64
+p(canopy_c)psi(elev)         4 207.44  2.17 0.1605     0.80
+p(canopy_c)psi(canopy_c)     4 208.63  3.36 0.0887     0.89
+p(basal_a)psi(dist_def)      4 210.06  4.79 0.0434     0.93
+p(elev)psi(dist_def)         4 210.57  5.30 0.0336     0.97
+p(.)psi(.)                   2 212.12  6.85 0.0155     0.98
+p(basal_a)psi(elev)          4 214.66  9.39 0.0043     0.99
+p(elev)psi(elev)             4 214.94  9.67 0.0038     0.99
+p(basal_a)psi(slope)         4 215.26  9.99 0.0032     0.99
+p(elev)psi(slope)            4 215.61 10.34 0.0027     1.00
+p(basal_a)psi(basal_a)       4 215.76 10.49 0.0025     1.00
