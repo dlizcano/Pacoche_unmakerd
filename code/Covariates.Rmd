@@ -1,0 +1,225 @@
+---
+title: "Covariates"
+author: "Diego J. Lizcano"
+date: "22 de marzo de 2016"
+output: pdf_document
+---
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+
+
+# then you can use ggplot2 to plot that object
+library(ggplot2)
+library(ggmap)
+library(lubridate)
+library(dplyr)
+library(maptools)
+library(rasterVis)
+library(raster)
+# Load 'rgdal' package, which is used to read/write shapefiles and rasters
+library(rgdal) 
+library(dismo)
+# library(sdm)
+library(spatstat)
+
+pacoche.raw<-read.csv("code/Pacoche_1_4arrays.csv") # ojo falta la camara 3-12... esta estaba mal escrita
+long<-unique(pacoche.raw$longitude)
+lati<-unique(pacoche.raw$latitude)
+centercoord<-c(mean(subset(long, long<=1)),mean(unique(subset(lati, lati<=1))))
+coordsubset<-subset(pacoche.raw,select = c(camera_trap,longitude,latitude,first_name_set_camera))
+
+# get elevation
+# elevation<-getData(name = "SRTM",lon=centercoord[1], lat=centercoord[2])
+#################################
+# get elevation
+################################
+
+# elevationpaco<-getData('SRTM',lon=centercoord[1], lat=centercoord[2])
+
+ # read elevation from disk
+elevationpaco<- raster("C:/Users/CaracterizaciónD/Documents/GitHub/machalilla/Machalilla_paper/code/srtm_20_13.tif")
+
+cam.cords<-as.data.frame(distinct(coordsubset))
+coordinates(cam.cords) <- ~longitude+latitude #make sppatial data fram
+geo <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0") #def cord
+proj4string(cam.cords)<-geo # set cords
+
+e<-extent (-80.917,-80.788, -1.190, -1.019)
+elevation.crop<-crop(elevationpaco, e)
+
+plot(elevation.crop)
+plot(cam.cords, add=T)
+slope<-terrain(elevation.crop, opt='slope', unit='degrees', neighbors=4)
+
+
+cam.cords.sp<-SpatialPoints(cam.cords)
+proj4string(cam.cords.sp)<-geo 
+
+
+############################
+# park limit
+############################
+
+
+# limit <- readShapeSpatial("C:/Users/CaracterizaciónD/Documents/GitHub/pacoche/data/pacoche.shp")
+# proj4string(limit)<-geo #put georef
+# e<-extent (-80.9,-80.8, -1.190, -1.02)
+# limit.ow<-as(limit, "SpatialLines",ext = e) # make SpatialLines
+
+# limit.psp<-as.psp(limit.ow)
+
+# road.density<-density.psp(limit.psp,edge = T)
+# road.density.im<-as.im(road.density)
+
+# roadpol <- readShapeSpatial("shp\\machalilla_limitclip.shp")
+# names(roadpol)<-"dist_rd"
+# proj4string(roadpol)<-geo
+# dist_rd<-over(x = cam.cords, y = roadpol)
+# add to table
+# cam.cords$dist_rd<-as.numeric(dist_rd[,1])
+
+
+
+
+pacochelimit <- readShapePoly(fn="C:/code/ULEAM/Infor_Caract/pacoche/data/pacoche", IDvar="boundary")
+
+geo <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0") #def cord
+proj4string(pacochelimit)<-geo # set cords
+
+
+
+################################### 
+### get just cameras
+
+just.cam1<-dplyr::select(pacoche.raw, camera_trap, latitude, longitude)
+just.cams<-dplyr::distinct(just.cam1)
+
+coordinates(just.cams) <- ~longitude+latitude #make spatial data frame
+proj4string(just.cams)<-geo # set cords
+
+############ over
+cam_in_out<-over(x = just.cams, y = pacochelimit) #cam.cords
+# cam_in_out<-over(x = cam.cords, y = pacochelimit)
+# add camera name to table
+cam_in_out$camera_trap<-just.cams$camera_trap
+
+index.in<-which(cam_in_out$boundary == "protected_area")
+index.out<-which(is.na(cam_in_out$boundary))
+
+just.in<-just.cams[index.in,]
+just.out<-just.cams[index.out,]
+
+
+##### cuantas camaras in
+length(index.in)
+
+##### cuantas camaras out
+length(index.out)
+
+######## plot to check
+plot(just.out, col="red" )
+plot(just.in,  add=T)
+plot(pacochelimit, add=T)
+
+
+plot(just.in, col="red")
+plot(pacochelimit, add=T)
+text(just.out, labels=just.out$camera_trap, cex = .5)
+
+
+plot(just.out, col="red")
+plot(pacochelimit, add=T)
+text(just.out, labels=just.out$camera_trap, cex = .5)
+
+############ add new column in_out and merge
+# cam.in<-as.data.frame(just.in)
+just.in$in_out<-"in"
+
+# cam.out<-as.data.frame(just.out)
+just.out$in_out<-"out"
+
+cam.cords<-rbind(just.in,just.out)
+
+############# select by vector
+
+pacoche.in<-pacoche.raw[is.element(pacoche.raw$camera_trap, just.in$camera_trap),]
+pacoche.out<-pacoche.raw[is.element(pacoche.raw$camera_trap, just.out$camera_trap),]
+
+
+
+
+
+# roadpol.ow<-as(as(roadpol, "SpatialPolygons"), "owin") # make owin
+
+
+
+#####################################################
+## Deforestation
+####################################################
+
+defore<-raster("C:/Users/CaracterizaciónD/Documents/GitHub/pacoche/data/pacoche_thresholded_annual_r3.tif",layer=13)
+defore.crop<-crop(defore, e) # cut by the extent
+m <- c(0, 2, NA,  4, 6, NA) # matriz de reclasificacion
+rclmat <- matrix(m, ncol=3, byrow=TRUE) # put as mat
+deforestado <- reclassify(defore.crop, rclmat)
+# plot(deforestado, col="red", add=T)
+dist.def_paco <- distance(deforestado) # make distance from not raster category 3 to fill NAs
+writeRaster(dist.def_paco, filename="dist_def_paco_r3.tif", format="GTiff", overwrite=TRUE)
+plot(dist.def_paco)
+plot(cam.cords, add=T)
+text(just.out, labels=cam.cords$camera_trap, cex = .5)
+# plot(deforestado, col="red", add=T)
+# etract values
+dist.def.ovr <- extract(dist.def_paco, cam.cords, method='bilinear')
+index<-which(is.na(dist.def.ovr)) # detect NA. Means cam is in deforested
+dist.def.ovr [index]<-0 # camera in distance cero to deforested
+
+# etract values
+elev.ovr <- extract(elevation.crop, cam.cords, method='bilinear')
+slope.ovr <- extract(slope, cam.cords, method='bilinear')
+
+# add to table
+cam.cords$elev<-elev.ovr
+cam.cords$slope<-slope.ovr
+
+cam.cords$dist_def<-dist.def.ovr
+cam_covs1<-as.data.frame(cam.cords)   
+
+est.veget<-read.csv("C:/Users/CaracterizaciónD/Documents/GitHub/pacoche/data/estructVegetPacoche.csv") # read table
+
+cam_index<-order(est.veget$camera) # sort by column index
+cam.est.veget<-est.veget[cam_index, ] # ordena
+
+cam_index2<-order(cam_covs1$camera_trap)
+cam.geo.covs<-cam_covs1[cam_index2, ]
+
+
+
+
+######### remove camara robada
+index_3_8<-which(cam.est.veget$camera == "CT-RVP-3-8")
+ cam_3_8<-cam.est.veget[index_3_8, ] # make data frame using the cam
+ est.veget<-cam.est.veget[-index_3_8 ,] # remove the cam
+colnames(est.veget)[1] <- "camera_trap" # rename camera by camera_trap
+ 
+# falta deforestacion, tipo de habitat (bosque humedo seco)
+ ############  fix desfase! OJO!!!!!!!!!!!!!!!!!!!!!!!!!
+# cam.and.covs<-cbind(as.data.frame(cam.cords), est.veget)
+cam.and.covs<- merge(est.veget,cam.geo.covs,by="camera_trap") # merge by camera_trap
+
+
+
+
+```
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

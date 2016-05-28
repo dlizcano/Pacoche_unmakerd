@@ -1,0 +1,623 @@
+---
+title: Informe Final del Proyecto "Caracterización ecológica de la fauna mediana y grande en áreas protegidas de la provincia de Manabí" \break http://faunamanabi.github.io/ \break Modelos de Ocupación, bajo el modelo estático (MacKenzie et al. 2002) para para las especies de mamíferos en el Refugio de Vida Silvestre y Marino Costera Pacoche
+author: Departamento Central de Investigaciones (DCI), \break Universidad Laica Eloy
+  Alfaro de Manabi (ULEAM) \break Diego J. Lizcano \break Laura Cervera \break Violeta Pares 
+date: "Septiembre, 2015"
+output:
+  pdf_document:
+    highlight: tango
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+  html_document:
+    toc: yes
+  word_document:
+    highlight: kate
+license: CC
+box: grey
+bibliography: C:/code/ULEAM/Infor_Caract/citas_simula.bib
+
+---
+
+
+\newcommand{\HRule}[1]{\hfill \rule{1\linewidth}{#1}} % Horizontal rule at the bottom of the page, adjust width here
+
+%%%%%% Logo
+\HRule{1pt} 
+
+\vspace{0.25in}
+\centerline {
+  \includegraphics[width=2in]{C:/code/ULEAM/Infor_Caract/machalilla/img/ULEAM_DCI.png}
+}
+\vspace{0.1in}
+
+
+
+\HRule{1pt} 
+
+
+```{r setup, include=FALSE}
+# cache all... if problem... delete cache folder
+knitr::opts_chunk$set(cache=TRUE)
+```
+
+# La ocupación de hábitat
+
+Obtener datos para estudios de poblaciones animales, es costoso y dispendioso, y no siempre se puede medir la densidad poblacional o parámetros demográficos como natalidad o mortalidad [@Morrison2002]. Estimar adecuadamente la densidad poblacional requiere de un elevado número de registros, con los costos económicos y logísticos que esto conlleva [@Morrison2006]. Es por eso que la estimación de la ocupación de hábitat ($\psi$) es una buena herramienta para estudiar poblaciones, ya que es un fiel reflejo de otros parámetros poblacionales importantes como la abundancia y la densidad poblacional [@MacKenzie2002; @MacKenzie2006]. Sin embargo y debido a que la detectabilidad (_p_) en animales silvestres no es completa o perfecta, el uso de los datos crudos genera subestimaciones de la ocupación del hábitat. Pero, con el empleo de muestreos repetidos, es posible generar estimaciones de la detectabilidad y, con esta estimación, obtener valores no sesgados de la ocupación del hábitat. La incorporación de covariables permite explicar mejor la heterogeneidad de la relación entre la probabilidad de detección y el hábitat, pero estas relaciones deben ser establecidas para poder interpretar correctamente los resultados de los modelos de hábitat [@Gu2004].
+
+
+Los métodos de análisis de ocupación son una familia de modelos que permiten realizar inferencias acerca de los efectos de variables continuas y categóricas sobre la ocupación del hábitat [@Bailey2013; @Iknayan2014]. Además, si los muestreos se realizan a través de períodos largos y sucesivos de tiempo, también es posible estimar tasas de extinción y recolonización, que son útiles en estudios de metapoblaciones. Este es un campo de gran desarrollo en bioestadística que ha producido una gran explosión de estudios que usan la ocupación teniendo en cuenta la detectabilidad [@Royle2008; @Royle2012].  
+
+
+# Duración del muestreo
+
+Las trampas cámara permanecieron activas desde final de septiembre 2014 hasta mayo 2015. La siguiente figura ilustra el periodo de actividad de cada trampa cámara, sus fechas de instalación, fechas de retirada, y su funcionamiento diario. 
+ 
+
+```{r calendar_f,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE, error=FALSE, message=FALSE, fig.height=11,fig.width=8}
+
+# library(xtable)
+library(lubridate)
+library(dplyr)
+library(maptools)
+# Load 'rgdal' package, which is used to read/write shapefiles and rasters
+library(rgdal)
+source("C:/code/ULEAM/Infor_Caract/code/TEAM_code.R")
+source("C:/code/ULEAM/Infor_Caract/code/calendar.R")
+
+pacoche.raw<-read.csv("C:/code/ULEAM/Infor_Caract/pacoche/data/CT-RVP-2014_spanish.csv") # ojo falta la camara 3-12
+
+#############################
+#### date fix
+#############################
+
+# unique(year(pacoche.raw$camera_trap_start_time))
+pacoche.raw$photo_date2<-as.Date(as.character(pacoche.raw$photo_date), "%d-%m-%y")
+
+pacoche.raw$Sampling.Period<-2014
+pacoche.raw$binomial<-paste(pacoche.raw$genus, pacoche.raw$specise, sep = " ")
+
+#############################
+# translate months
+#############################
+# 
+# meses<-as.data.frame(t(matrix(c("ago","aug","dic","dec","ene","jan","abr","apr"),nrow = 2,ncol = 4)))
+# pacoche.raw$camera_trap_start_time2<-NA
+# pacoche.raw$camera_trap_end_time2<-NA
+# for (i in 1:4){  
+# # get month
+#   chkmes<-substr(as.character(pacoche.raw$photo_date), start=4, stop=6)
+#   chkmes2<-substr(as.character(pacoche.raw$camera_trap_start_time), start=4, stop=6)
+#   chkmes3<-substr(as.character(pacoche.raw$camera_trap_end_time), start=4, stop=6)
+#   # chane month
+#   agoind<-which(chkmes == meses[i,1])
+#   agoind2<-which(chkmes2 == meses[i,1])
+#   agoind3<-which(chkmes3 == meses[i,1])
+#   # pacoche.raw$photo_date[agoind]
+#   pacoche.raw$photo_date2[agoind]<-as.Date(gsub(as.character(meses[i,1]), 
+#                                                      as.character(meses[i,2]), 
+#                                                      pacoche.raw$photo_date[agoind]), "%d-%b-%Y")
+#   
+#   pacoche.raw$camera_trap_start_time2[agoind2]<-as.Date(gsub(as.character(meses[i,1]), 
+#                                                    as.character(meses[i,2]), 
+#                                                    pacoche.raw$camera_trap_start_time[agoind2]), "%d-%b-%Y")
+#   
+#   pacoche.raw$camera_trap_end_time2[agoind3]<-as.Date(gsub(as.character(meses[i,1]), 
+#                                                                as.character(meses[i,2]), 
+#                                                                pacoche.raw$camera_trap_end_time[agoind3]), "%d-%b-%Y")
+# }
+# 
+# # tochk
+# # unique(pacoche.raw$photo_date2)
+
+
+pacoche.raw$camera_trap_start_date<-as.Date(substr(as.character(pacoche.raw$camera_trap_start_time), start=1, stop=11), "%d-%b-%Y")
+pacoche.raw$camera_trap_end_date<-as.Date(substr(as.character(pacoche.raw$camera_trap_end_time), start=1, stop=11), "%d-%b-%Y")
+
+#################################
+# Fix 2013 problem
+# A camera has date wrong
+# CT-RVP-2-13  and  CT-RVP-1-3
+# Fix start date manually
+################################
+# identify the problem
+# index_problem_2011<-which(pacoche.raw$camera_trap_start_date == "2013-11-11")
+# problem_2011<-pacoche.raw[index_problem_2011,]
+# unique(problem_2011$camera_trap)
+
+# # fix 2-13 Time difference of 1124 days
+ index_2_13<-which(pacoche.raw$camera_trap == "CT-RVP-2-13")
+ cam_2_13<-pacoche.raw[index_2_13, ] # make data frame using the cam
+ pacoche.raw<-pacoche.raw[-index_2_13 ,] # remove the cam
+ cam_2_13$photo_date2<-cam_2_13$photo_date2 + 1124
+
+# # fix 1-3 Time difference of  457 days
+ index_1_3<-which(pacoche.raw$camera_trap == "CT-RVP-1-3")
+ cam_1_3<-pacoche.raw[index_1_3, ] # make data frame using the cam
+ pacoche.raw<-pacoche.raw[-index_1_3 ,] # remove the cam
+ cam_1_3$camera_trap_end_date<-as.Date("2014-12-01", format="%Y-%m-%d")
+ cam_1_3$photo_date2<-cam_1_3$photo_date2 + 457
+
+
+# # fix 1-4 Time difference of 
+ index_1_4<-which(pacoche.raw$camera_trap == "CT-RVP-1-4")
+ cam_1_4<-pacoche.raw[index_1_4, ] # make data frame using the cam
+ pacoche.raw<-pacoche.raw[-index_1_4 ,] # remove the cam
+ cam_1_4<-cam_1_4[-c(1:3),] # borra 3 primeros porblematic 2011
+ 
+## fix 1-1 Time difference of 114 days days
+index_1_1<-which(pacoche.raw$camera_trap == "CT-RVP-1-1")
+ cam_1_1<-pacoche.raw[index_1_1, ] # make data frame using the cam
+ pacoche.raw<-pacoche.raw[-index_1_1 ,] # remove the cam
+ # cam_1_3$camera_trap_end_date<-as.Date("2014-12-01", format="%Y-%m-%d")
+ cam_1_1$photo_date2<-cam_1_1$photo_date2 + 118
+
+
+# 
+# # fix 1-10  # add 31 days since data setup pickup en data 12 and beyond
+# index_1_10<-which(pacoche.raw$camera_trap == "CT-PNM-1-10")
+# cam_1_10<-pacoche.raw[index_1_10, ]
+# pacoche.raw<-pacoche.raw[-index_1_10 ,]
+# 
+# cam_1_10$camera_trap_start_date<-as.Date("2014-09-23", format="%Y-%m-%d") 
+# cam_1_10$camera_trap_end_date<-as.Date("2014-11-05", format="%Y-%m-%d")
+# cam_1_10$photo_date2[c(12:875)]<-cam_1_10$photo_date2[c(12:875)] +31
+# # delete problematic data
+# cam_1_10<-cam_1_10[-24,]
+# cam_1_10<-cam_1_10[-25,]
+# 
+# # fix 3-10  # restar 30 dias
+# index_3_10<-which(pacoche.raw$camera_trap == "CT-PNM-3-10")
+# cam_3_10<-pacoche.raw[index_3_10, ]
+# pacoche.raw<-pacoche.raw[-index_3_10 ,]
+# 
+# cam_3_10$camera_trap_start_date<-as.Date("2015-01-27", format="%Y-%m-%d") 
+# cam_3_10$camera_trap_end_date<-as.Date("2015-03-15", format="%Y-%m-%d")
+# # borra los primeros 30 problematicos con fecha 2011
+# cam_3_10<-cam_3_10[-c(1:30),]
+# cam_3_10$photo_date2<-cam_3_10$photo_date2  - 30
+# 
+# 
+# # fix 3-07 # add difference of 365 days
+# index_3_07<-which(pacoche.raw$camera_trap == "CT-PNM-3-07")
+# cam_3_07<-pacoche.raw[index_3_07, ]
+# 
+# pacoche.raw<-pacoche.raw[- index_3_07 ,]
+# cam_3_07$camera_trap_start_date<-as.Date("2015-01-27", format="%Y-%m-%d")
+# cam_3_07$camera_trap_end_date<-as.Date("2015-03-11", format="%Y-%m-%d")
+# cam_3_07$photo_date2<- cam_3_07$photo_date2 + 365
+### remove from pacoche.raw
+# pacoche.raw<-pacoche.raw[-index_1_07 ,]
+# pacoche.raw<-pacoche.raw[-index_3_10 ,]
+# pacoche.raw<-pacoche.raw[-index_3_07 ,]
+
+
+#### Add corrected
+pacoche.raw<-rbind(pacoche.raw, cam_1_3, cam_1_4, cam_2_13, cam_1_1)
+# pacoche.raw<-rbind(pacoche.raw, cam_1_10)
+# pacoche.raw<-rbind(pacoche.raw, cam_3_10)
+# pacoche.raw<-rbind(pacoche.raw, cam_3_07)
+
+#  problematic ?
+# which(pacoche.raw$photo_date2 == "2011-11-11")
+# which(pacoche.raw$camera_trap == "CT-PNM-1-10")
+
+
+########## extract yr and month
+pacoche.raw$year<-year(pacoche.raw$photo_date2)
+pacoche.raw$month<-month(pacoche.raw$photo_date2)
+
+# problem?
+# which(pacoche.raw$year == "2011")
+# problem_index<- which(is.na(pacoche.raw$camera_trap_start_date) == TRUE)
+# problema<-pacoche.raw[problem_index,]
+# unique(problema$camera_trap)
+
+
+
+
+
+
+
+####################################
+# make photo calendar type
+####################################
+
+# f.calendar.yr(dataset = pacoche.raw, yr_toplot = 1)
+# f.calendar.yr(dataset = pacoche.raw, yr_toplot = 2)
+
+
+```
+
+
+```{r calendar2,cache=TRUE,warning=FALSE,eval=FALSE, echo=FALSE, error=FALSE, message=FALSE, fig.height=11,fig.width=8}
+f.calendar.yr(dataset = pacoche.raw, yr_toplot = 1)
+```
+
+```{r r calendar3,cache=TRUE,warning=FALSE,eval=FALSE, echo=FALSE, error=FALSE, message=FALSE, fig.height=11,fig.width=8}
+f.calendar.yr(dataset = pacoche.raw, yr_toplot = 2)
+```
+
+# Especies registradas
+
+Las especies registradas en el Refugio de Vida Silvestre Marino Costera Pacoche fueron en total 38, entre aves y mamiferos.
+
+
+```{r sps,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,error=FALSE, message=FALSE, results='asis'}
+library(xtable)
+library(dplyr)
+library(knitr)
+
+####################### eliminar aca el array 4 FALTA ####################
+mat.per.sp<-f.matrix.creator2(data = pacoche.raw,year = 2014) ## cchk si deja 2015 out
+
+sp.names<-names(mat.per.sp) # species names
+
+# counting how many (total) records per species by all days
+cont.per.sp<-data.frame(row.names = sp.names)
+row.per.sp<-as.data.frame(matrix(nrow = length(sp.names), ncol=c(59)))
+col.per.sp<-as.data.frame(matrix(nrow = length(sp.names), ncol=c(161)))
+rownames(row.per.sp)<-sp.names
+rownames(col.per.sp)<-sp.names
+
+for (i in 1:length(mat.per.sp)){
+  cont.per.sp[i,1]<-sum(apply(as.data.frame(mat.per.sp [[i]]),FUN=sum,na.rm=T, MARGIN = 1))
+  
+   row.per.sp[i,]<-apply(mat.per.sp[[i]],1, function(x) sum(x, na.rm=T))
+   # row.per.sp[i,which(row.per.sp[i,]>0)]<-1 # convert to presence absence  1 and 0
+  
+   col.per.sp[i,]<-apply(mat.per.sp[[i]],2, function(x) sum(x, na.rm=T))
+   # col.per.sp[i,which(col.per.sp[i,]>0)]<-1 # convert to presence absence  1 and 0
+  
+}
+
+# colnames(row.per.sp)<-rep
+# cont.per.sp$especie<-rownames(cont.per.sp)
+colnames(cont.per.sp)<-c("Numero_de_registros")
+#xtable(arrange(df = cont.per.sp, desc(Numero_de_fotos)))
+# xtable(cont.per.sp)
+kable(cont.per.sp)
+
+
+```
+
+## Distribucion posterior de la riqueza de especies
+
+Riqueza de especies y acumulación, modelando la ocurrencia y la detectabilidad. Este análisis sigue el método de Dorazio et al. [-@Dorazio2006].
+
+```{r richness,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,fig.height=5,fig.width=8,message=FALSE}
+
+source("C:/code/ULEAM/Infor_Caract/code/MultiSpeciesSiteOcc.R")
+
+# library(dplyr)
+# colapse mat in: sp by row site by column
+
+row.per.sp<-row.per.sp[-1,] # elimina especie vacia del comienzo
+
+# filter mat.per.sp to sp of wild mammals
+mammal.per.sp<- mat.per.sp[-c(39,38,37,36,33,31,28,27,23,17,14,11,10,8,1)]
+full.mammal<-ldply(mammal.per.sp, data.frame)
+
+sp.abund.count<-col.per.sp[-c(39,38,37,36,33,31,28,27,23,17,14,11,10,8,1),]
+
+row.per.sp.2<-row.per.sp[-c(39,38,37,36,33,31,28,27,23,17,14,11,10,8),]
+
+ X1 <- as.matrix(row.per.sp.2) # col.per.sp por dias y row.per.sp por sitios (camaras)
+ nrepls <- 190 #dias 
+ especies <- MultiSpeciesSiteOcc(nrepls, X1)
+ 
+ # summary(especies$fit$sims.matrix)
+ 
+ alpha.post = especies$fit$sims.matrix[,"alpha"]
+ sigmaU.post = especies$fit$sims.matrix[,"sigma.u"]
+ N.post = especies$fit$sims.matrix[,"N"]
+ 
+ nsites = 60 
+ cum_sp<-CumNumSpeciesPresent(nsites, alpha.post, sigmaU.post, N.post)
+
+#histogram of posteriors
+hist(especies$fit$sims.matrix[,"N"],breaks = c(23:55), xlab="Number of mammal species", ylab="Relative frecuency", main="", xlim = c(24,45))
+#abline(v=median(especies$fit$sims.matrix[,"N"]),col="blue", lty = 2) # -> lines.histogram(*)
+#median(especies$fit$sims.matrix[,"N"]) #### esperado
+
+abline(v=length(row.per.sp.2[,1]),col="blue", lty = 2) # -> lines.histogram(*) observadas
+abline(v=median(especies$fit$sims.matrix[,"N"]),col="red", lty = 2) # -> esperadas por detectabilidad
+
+
+mean(especies$fit$sims.matrix[,"N"])
+median(especies$fit$sims.matrix[,"N"])
+
+
+```
+
+
+La media de la distribucion posterior es `r mean(especies$fit$sims.matrix[,"N"])`. Mientras que la mediana `r median(especies$fit$sims.matrix[,"N"])`. 
+
+```{r inout,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,fig.height=5,fig.width=8,message=FALSE}
+#############################################################
+#### over park limit
+
+
+library(maptools)
+library(rgdal) 
+library(spatstat)
+
+pacochelimit <- readShapePoly(fn="C:/code/ULEAM/Infor_Caract/pacoche/data/pacoche", IDvar="boundary")
+
+geo <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0") #def cord
+proj4string(pacochelimit)<-geo # set cords
+
+
+
+################################### 
+### get just cameras
+
+just.cam1<-select(pacoche.raw, camera_trap, latitude, longitude)
+just.cams<-distinct(just.cam1)
+
+coordinates(just.cams) <- ~longitude+latitude #make spatial data frame
+proj4string(just.cams)<-geo # set cords
+
+############ over
+cam_in_out<-over(x = just.cams, y = pacochelimit)
+# add camera name to table
+cam_in_out$camera_trap<-just.cams$camera_trap
+
+index.in<-which(cam_in_out$boundary == "protected_area")
+index.out<-which(is.na(cam_in_out$boundary))
+
+just.in<-just.cams[index.in,]
+just.out<-just.cams[index.out,]
+
+##### cuantas camaras in
+length(index.in)
+
+##### cuantas camaras out
+length(index.out)
+
+######## plot to check
+plot(just.out, col="red" )
+plot(just.in,  add=T)
+plot(pacochelimit, add=T)
+
+
+
+plot(just.in, col="red")
+plot(pacochelimit, add=T)
+text(just.in, labels=just.out$camera_trap, cex = .5)
+
+
+plot(just.out, col="red")
+plot(pacochelimit, add=T)
+text(just.out, labels=just.out$camera_trap, cex = .5)
+
+
+############# select by vector
+
+pacoche.in<-pacoche.raw[is.element(pacoche.raw$camera_trap, just.in$camera_trap),]
+pacoche.out<-pacoche.raw[is.element(pacoche.raw$camera_trap, just.out$camera_trap),]
+
+
+##########################################
+################ make mat per species
+##########################################
+
+mat.per.sp.in<-f.matrix.creator2(data = pacoche.in,year = 2014) ## cchk si deja 2015 out
+mat.per.sp.out<-f.matrix.creator2(data = pacoche.out,year = 2014) ## cchk si deja 2015 out
+
+sp.names.in<-names(mat.per.sp.in) # species names
+sp.names.out<-names(mat.per.sp.out) # species names
+
+
+
+################ Count ################ 
+################ in IN
+# counting how many (total) records per species by all days
+dim(mat.per.sp.in[[5]])
+
+cont.per.sp.in<-data.frame(row.names = sp.names.in)
+row.per.sp.in<-as.data.frame(matrix(nrow = length(sp.names.in), ncol=c(41)))
+col.per.sp.in<-as.data.frame(matrix(nrow = length(sp.names.in), ncol=c(194)))
+rownames(row.per.sp.in)<-sp.names.in
+rownames(col.per.sp.in)<-sp.names.in
+
+for (i in 1:length(mat.per.sp.in)){
+  cont.per.sp.in[i,1]<-sum(apply(as.data.frame(mat.per.sp.in [[i]]),FUN=sum,na.rm=T, MARGIN = 1))
+  
+  row.per.sp.in[i,]<-apply(mat.per.sp.in[[i]],1, function(x) sum(x, na.rm=T))
+  # row.per.sp[i,which(row.per.sp[i,]>0)]<-1 # convert to presence absence  1 and 0
+  
+  col.per.sp.in[i,]<-apply(mat.per.sp.in[[i]],2, function(x) sum(x, na.rm=T))
+  # col.per.sp[i,which(col.per.sp[i,]>0)]<-1 # convert to presence absence  1 and 0
+  
+}
+
+
+row.per.sp.in<- row.per.sp.in[-c(31,30,29,26,25,20,14,13,11,10,8,1),]
+
+
+
+# 
+# row.per.sp.in<-row.per.sp.in[-35,] # elimina Carduelis siemiradzkii
+# row.per.sp.in<-row.per.sp.in[-34,] # elimina Damophila julie
+# row.per.sp.in<-row.per.sp.in[-33,] # elimina Momotus momota
+# #row.per.sp.in<-row.per.sp[-32,] # elimina Gallus gallus
+# # row.per.sp.in<-row.per.sp[-33,] # elimina Buteogallus urubitinga 
+# row.per.sp.in<-row.per.sp.in[-31,] # elimina Columbina cruziana 
+# row.per.sp.in<-row.per.sp.in[-30,] # elimina Gallus gallus 
+# row.per.sp.in<-row.per.sp.in[-29,] # elimina Coragyps atratus 
+# row.per.sp.in<-row.per.sp.in[-27,] # elimina Zenaida auriculata
+# #row.per.sp.in<-row.per.sp[-25,] # elimina Damophila julie 
+# row.per.sp.in<-row.per.sp.in[-20,] # elimina Ortalis vetula
+# row.per.sp.in<-row.per.sp.in[-13,] # elimina Ortalis erythroptera
+# row.per.sp.in<-row.per.sp.in[-11,] # elimina Homo sapiens
+# row.per.sp.in<-row.per.sp.in[-10,] # elimina Leptotila verreauxi
+# row.per.sp.in<-row.per.sp.in[-08,] # elimina Tinamus major
+# row.per.sp.in<-row.per.sp.in[-01,] # elimina 1era especie vacia
+# 
+
+######### CHK names
+rownames(row.per.sp.in)
+
+#################### #################### #################### 
+#################### Acumula in 
+
+# get dimensions
+dim(mat.per.sp.in[[5]])
+
+X2 = as.matrix(row.per.sp.in) # col.per.sp por dias y row.per.sp por sitios (camaras)
+nrepls = 190 #dias 
+especies.in = MultiSpeciesSiteOcc(nrepls, X2)
+
+# summary(especies$fit$sims.matrix)
+
+alpha.post = especies.in$fit$sims.matrix[,"alpha"]
+sigmaU.post = especies.in$fit$sims.matrix[,"sigma.u"]
+N.post = especies.in$fit$sims.matrix[,"N"]
+
+nsites = 46 
+cum_sp.in<-CumNumSpeciesPresent(nsites, alpha.post, sigmaU.post, N.post)
+
+#histogram of posteriors
+hist(especies.in$fit$sims.matrix[,"N"],breaks = c(19:115), xlab="Number of mammal species", ylab="Relative frecuency", main="")
+abline(v=length(row.per.sp.in[,1]),col="blue", lty = 2) # -> lines.histogram(*) observadas
+abline(v=median(especies.in$fit$sims.matrix[,"N"]),col="red", lty = 2) # -> esperadas por detectabilidad
+
+
+################ Count ################ 
+################ in OUT
+# counting how many (total) records per species by all days
+
+# get dimensions
+dim(mat.per.sp.out[[2]])
+
+cont.per.sp.out<-data.frame(row.names = sp.names.out)
+row.per.sp.out<-as.data.frame(matrix(nrow = length(sp.names.out), ncol=c(20))) 
+col.per.sp.out<-as.data.frame(matrix(nrow = length(sp.names.out), ncol=c(187)))
+rownames(row.per.sp.out)<-sp.names.out
+rownames(col.per.sp.out)<-sp.names.out
+
+for (i in 1:length(mat.per.sp.out)){
+  cont.per.sp.out[i,1]<-sum(apply(as.data.frame(mat.per.sp.out [[i]]),FUN=sum,na.rm=T, MARGIN = 1))
+  
+  row.per.sp.out[i,]<-apply(mat.per.sp.out[[i]],1, function(x) sum(x, na.rm=T))
+  # row.per.sp[i,which(row.per.sp[i,]>0)]<-1 # convert to presence absence  1 and 0
+  
+  col.per.sp.out[i,]<-apply(mat.per.sp.out[[i]],2, function(x) sum(x, na.rm=T))
+  # col.per.sp[i,which(col.per.sp[i,]>0)]<-1 # convert to presence absence  1 and 0
+  
+}
+
+row.per.sp.out<- row.per.sp.out[-c(30,27,24,18,16,14,12,9,4,1),]
+
+# row.per.sp.out<-row.per.sp[-35,] # elimina Carduelis siemiradzkii
+# row.per.sp.out<-row.per.sp[-34,] # elimina Damophila julie
+# row.per.sp.out<-row.per.sp[-33,] # elimina Momotus momota
+# row.per.sp.out<-row.per.sp[-32,] # elimina Gallus gallus
+# row.per.sp.out<-row.per.sp[-33,] # elimina Buteogallus urubitinga 
+# row.per.sp.out<-row.per.sp[-31,] # elimina Columbina cruziana 
+# row.per.sp.out<-row.per.sp[-30,] # elimina Gallus gallus 
+# row.per.sp.out<-row.per.sp[-29,] # elimina Coragyps atratus 
+# row.per.sp.out<-row.per.sp[-27,] # elimina Zenaida auriculata
+
+# CHK rownames(row.per.sp.out)
+
+######### CHK names
+rownames(row.per.sp.out)
+length(rownames(row.per.sp.out))
+length(rownames(row.per.sp.in))
+#################### #################### #################### 
+#################### Acumula OUT 
+
+
+# get dimensions
+dim(mat.per.sp.out[[5]])
+
+X3 = as.matrix(row.per.sp.out) # col.per.sp por dias y row.per.sp por sitios (camaras)
+nrepls = 190 #dias 
+especies.out = MultiSpeciesSiteOcc(nrepls, X3)
+
+
+# summary(especies$fit$sims.matrix)
+
+alpha.post = especies.out$fit$sims.matrix[,"alpha"]
+sigmaU.post = especies.out$fit$sims.matrix[,"sigma.u"]
+N.post = especies.out$fit$sims.matrix[,"N"]
+
+nsites = 20
+cum_sp.out<-CumNumSpeciesPresent(nsites, alpha.post, sigmaU.post, N.post)
+
+#histogram of posteriors
+hist(especies.out$fit$sims.matrix[,"N"],breaks = c(18:110), xlim=c(18,110),xlab="Number of mammal species", ylab="Relative frecuency", main="")
+abline(v=length(row.per.sp.out[,1]),col="blue", lty = 2) # -> lines.histogram(*) observadas
+abline(v=median(especies.out$fit$sims.matrix[,"N"]),col="red", lty = 2) # -> esperadas por detectabilidad
+
+
+
+###########################################################
+####################### fi  IN and OUT ####################
+
+
+par(mfrow=c(2, 1))
+
+#histogram of posteriors
+hist(especies.in$fit$sims.matrix[,"N"],breaks = c(18:120), xlim=c(18,120), xlab="", ylab="Frecuencia relativa", main="dentro del RVSMCP")
+abline(v=length(row.per.sp.in[,1]),col="blue", lty = 2) # -> lines.histogram(*) observadas
+abline(v=median(especies.in$fit$sims.matrix[,"N"]),col="red", lty = 2) # -> esperadas por detectabilidad
+
+#histogram of posteriors
+hist(especies.out$fit$sims.matrix[,"N"],breaks = c(18:120), xlim=c(18,120), xlab="Número de especies de mamíferos", ylab="Frecuencia relativa", main="fuera del RVSMCP")
+abline(v=length(row.per.sp.out[,1]),col="blue", lty = 2) # -> lines.histogram(*) observadas
+abline(v=median(especies.out$fit$sims.matrix[,"N"]),col="red", lty = 2) # -> esperadas por detectabilidad
+
+
+
+
+
+  
+
+
+################## Taxatize
+library(taxize)
+
+############# mammal in
+taxonomia.in<-matrix(nrow = length(sp.names.in),ncol = 5)
+colnames(taxonomia.in)= c("db","query", "Class", "family", "order")
+rownames(taxonomia.in)<-sp.names.in
+taxonomia.in<-as.data.frame(taxonomia.in)
+for (i in 2:length(sp.names.in)) { 
+  taxonomia.in[i,]<-as.vector(tax_name(query = sp.names.in[i], get = c("Class", "family", "order"), db = "itis"))
+}
+
+############# mammal out
+taxonomia.out<-matrix(nrow = length(sp.names.out),ncol = 5)
+colnames(taxonomia.out)= c("db","query", "Class", "family", "order")
+rownames(taxonomia.out)<-sp.names.out
+taxonomia.out<-as.data.frame(taxonomia.out)
+for (i in 2:length(sp.names.out)) { 
+  taxonomia.out[i,]<-as.vector(tax_name(query = sp.names.out[i], get = c("Class", "family", "order"), db = "ncbi"))
+}
+
+
+
+################ Delete in in
+row.per.sp.in<-row.per.sp[-39,] # elimina Momotus momota
+row.per.sp<-row.per.sp[-37,] # elimina Columbina cruziana
+row.per.sp<-row.per.sp[-36,] # elimina Pipistrellus pipistrellus
+row.per.sp<-row.per.sp[-33,] # elimina Gallus gallus
+row.per.sp<-row.per.sp[-31,] # elimina Buteogallus urubitinga 
+row.per.sp<-row.per.sp[-28,] # elimina Carduelis siemiradzkii
+row.per.sp<-row.per.sp[-27,] # elimina Damophila julie 
+row.per.sp<-row.per.sp[-23,] # elimina Ortalis vetula
+row.per.sp<-row.per.sp[-14,] # elimina Ortalis erythroptera
+row.per.sp<-row.per.sp[-11,] # elimina Homo sapiens
+row.per.sp<-row.per.sp[-10,] # elimina Leptotila verreauxi
+row.per.sp<-row.per.sp[-08,] # elimina Tinamus major
+row.per.sp<-row.per.sp[-01,] # elimina 1era especie vacia
+
+
+
+
+```
+
+

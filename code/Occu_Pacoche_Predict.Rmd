@@ -1,0 +1,2653 @@
+
+---
+  title: Graficas del Ms. "Mamiferos de Pacoche" \break http://faunamanabi.github.io/ \break Modelos de Ocupación, bajo el modelo estático (MacKenzie et al. 2002) para para las especies de mamíferos de Pacoche
+author: Departamento Central de Investigaciones (DCI), \break Universidad Laica Eloy
+Alfaro de Manabi (ULEAM) \break Diego J. Lizcano \break Laura Cervera \break Violeta Pares 
+date: "Marzo, 2015"
+output:
+  pdf_document:
+  highlight: tango
+number_sections: yes
+toc: yes
+toc_depth: 3
+html_document:
+  toc: yes
+word_document:
+  highlight: kate
+license: CC
+box: grey
+bibliography: C:/code/ULEAM/Infor_Caract/citas_simula.bib
+---
+  
+  
+  \newcommand{\HRule}[1]{\hfill \rule{1\linewidth}{#1}} % Horizontal rule at the bottom of the page, adjust width here
+    
+    %%%%%% Logo
+    \HRule{1pt} 
+    
+    \vspace{0.25in}
+    \centerline {
+      \includegraphics[width=2in]{C:/code/ULEAM/Infor_Caract/machalilla/img/ULEAM_DCI.png}
+    }
+    \vspace{0.1in}
+    
+    
+    \HRule{1pt} 
+    
+    
+```{r setup, include=FALSE}
+    # cache all... if problem... delete cache folder
+    knitr::opts_chunk$set(cache=TRUE)
+```
+    
+    # La ocupación de hábitat
+    
+    Obtener datos para estudios de poblaciones animales, es costoso y dispendioso, y no siempre se puede medir la densidad poblacional o parámetros demográficos como natalidad o mortalidad [@Morrison2002]. Estimar adecuadamente la densidad poblacional requiere de un elevado número de registros, con los costos económicos y logísticos que esto conlleva [@Morrison2006]. Es por eso que la estimación de la ocupación de hábitat ($\psi$) es una buena herramienta para estudiar poblaciones, ya que es un fiel reflejo de otros parámetros poblacionales importantes como la abundancia y la densidad poblacional [@MacKenzie2002@MacKenzie2006]. Sin embargo y debido a que la detectabilidad (_p_) en animales silvestres no es completa o perfecta, el uso de los datos crudos genera subestimaciones de la ocupación del hábitat. Pero, con el empleo de muestreos repetidos, es posible generar estimaciones de la detectabilidad y, con esta estimación, obtener valores no sesgados de la ocupación del hábitat. La incorporación de covariables permite explicar mejor la heterogeneidad de la relación entre la probabilidad de detección y el hábitat, pero estas relaciones deben ser establecidas para poder interpretar correctamente los resultados de los modelos de hábitat [@Gu2004].
+    
+    Los métodos de análisis de ocupación son una familia de modelos que permiten realizar inferencias acerca de los efectos de variables continuas y categóricas sobre la ocupación del hábitat [@Bailey2013@Iknayan2014]. Además, si los muestreos se realizan a través de períodos largos y sucesivos de tiempo, también es posible estimar tasas de extinción y recolonización, que son útiles en estudios de metapoblaciones. Este es un campo de gran desarrollo en bioestadística que ha producido una gran explosión de estudios que usan la ocupación teniendo en cuenta la detectabilidad [@Royle2008; @Royle2012].  
+    
+    # Duración del muestreo
+    
+    Las trampas cámara permanecieron activas desde final de septiembre 2014 hasta comienzos de marzo 2015. La siguiente figura ilustra el periodo de actividad de cada trampa cámara, sus fechas de instalación, fechas de retirada, y su funcionamiento diario. 
+    
+    
+    ```{r calendar1,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE, error=FALSE, message=FALSE, fig.height=11,fig.width=8}
+    
+library(xtable)
+library(lubridate)
+library(dplyr)
+library(maptools)
+# Load 'rgdal' package, which is used to read/write shapefiles and rasters
+library(rgdal)
+# source("C:/code/ULEAM/Infor_Caract/code/TEAM_code.R") # to use from ULEAM
+# source("C:/code/ULEAM/Infor_Caract/code/calendar.R")
+
+source("C:/Users/Diego/Documents/GitHub/Pacoche_unmakerd/code/TEAM_code.R")
+source("C:/Users/Diego/Documents/GitHub/Pacoche_unmakerd/code/calendar.R")
+
+# pacoche.raw<-read.csv("C:/code/ULEAM/Infor_Caract/pacoche/data/CT-RVP-2014_spanish.csv") # ojo falta la camara 3-12
+# pacoche.raw<-read.csv("C:/Users/Diego/Documents/GitHub/Pacoche_unmakerd/data/CT-RVP-2014e.csv") # english ojo falta la camara 3-12
+pacoche.raw<-read.csv("C:/Users/Diego/Documents/CodigoR/ULEAM/Infor_Caract/Data/CT-RVP-2014e.csv") # ojo falta la camara 3-12
+
+#############################
+#### date fix
+#############################
+
+# unique(year(pacoche.raw$camera_trap_start_time))
+# pacoche.raw$photo_date2<-as.Date(as.character(pacoche.raw$photo_date), "%d-%m-%y") # 
+pacoche.raw$photo_date2<-as.Date(as.character(pacoche.raw$photo_date), "%Y-%m-%d") # lee fecha
+# pacoche.raw$photo_date2<-as.Date(format(pacoche.raw$photo_date2,  "%d-%m-%y"), "%d-%m-%y")# transform format fecha
+
+pacoche.raw$Sampling.Period<-2014
+pacoche.raw$binomial<-paste(pacoche.raw$genus, pacoche.raw$specise, sep = " ")
+
+#############################
+# translate months
+#############################
+# 
+# meses<-as.data.frame(t(matrix(c("ago","aug","dic","dec","ene","jan","abr","apr"),nrow = 2,ncol = 4)))
+# pacoche.raw$camera_trap_start_time2<-NA
+# pacoche.raw$camera_trap_end_time2<-NA
+# for (i in 1:4){  
+# # get month
+#   chkmes<-substr(as.character(pacoche.raw$photo_date), start=4, stop=6)
+#   chkmes2<-substr(as.character(pacoche.raw$camera_trap_start_time), start=4, stop=6)
+#   chkmes3<-substr(as.character(pacoche.raw$camera_trap_end_time), start=4, stop=6)
+#   # chane month
+#   agoind<-which(chkmes == meses[i,1])
+#   agoind2<-which(chkmes2 == meses[i,1])
+#   agoind3<-which(chkmes3 == meses[i,1])
+#   # pacoche.raw$photo_date[agoind]
+#   pacoche.raw$photo_date2[agoind]<-as.Date(gsub(as.character(meses[i,1]), 
+#                                                      as.character(meses[i,2]), 
+#                                                      pacoche.raw$photo_date[agoind]), "%d-%b-%Y")
+#   
+#   pacoche.raw$camera_trap_start_time2[agoind2]<-as.Date(gsub(as.character(meses[i,1]), 
+#                                                    as.character(meses[i,2]), 
+#                                                    pacoche.raw$camera_trap_start_time[agoind2]), "%d-%b-%Y")
+#   
+#   pacoche.raw$camera_trap_end_time2[agoind3]<-as.Date(gsub(as.character(meses[i,1]), 
+#                                                                as.character(meses[i,2]), 
+#                                                                pacoche.raw$camera_trap_end_time[agoind3]), "%d-%b-%Y")
+# }
+# 
+# # tochk
+# # unique(pacoche.raw$photo_date2)
+
+
+pacoche.raw$camera_trap_start_date<-as.Date(substr(as.character(pacoche.raw$camera_trap_start_time), start=1, stop=11), "%d-%b-%Y")
+pacoche.raw$camera_trap_end_date<-as.Date(substr(as.character(pacoche.raw$camera_trap_end_time), start=1, stop=11), "%d-%b-%Y")
+
+#################################
+# Fix 2013 problem 
+# A camera has date wrong
+# CT-RVP-2-13  and  CT-RVP-1-3
+# Fix start date manually 
+################################
+# identify the problem
+# index_problem_2011<-which(pacoche.raw$camera_trap_start_date == "2013-11-11")
+# problem_2011<-pacoche.raw[index_problem_2011,]
+# unique(problem_2011$camera_trap)
+
+# # fix 2-13 Time difference of 1124 days
+index_2_13<-which(pacoche.raw$camera_trap == "CT-RVP-2-13")
+cam_2_13<-pacoche.raw[index_2_13, ] # make data frame using the cam
+pacoche.raw<-pacoche.raw[-index_2_13 ,] # remove the cam
+cam_2_13$photo_date2<-cam_2_13$photo_date2 + 1124
+cam_2_13$camera_trap_start_date<-cam_2_13$camera_trap_start_date  + 1124
+cam_2_13$camera_trap_end_date<-cam_2_13$camera_trap_end_date  + 1124
+
+
+# # fix 1-3 Time difference of  457 days
+index_1_3<-which(pacoche.raw$camera_trap == "CT-RVP-1-3")
+cam_1_3<-pacoche.raw[index_1_3, ] # make data frame using the cam
+pacoche.raw<-pacoche.raw[-index_1_3 ,] # remove the cam
+cam_1_3$camera_trap_end_date<-as.Date("2014-12-01", format="%Y-%m-%d")
+cam_1_3$photo_date2<-cam_1_3$photo_date2 + 457
+cam_1_3$camera_trap_start_date<-cam_1_3$camera_trap_start_date  + 457
+# cam_1_3$camera_trap_end_date<-cam_1_3$camera_trap_end_date  + 357
+
+
+# # fix 1-4 Time difference of  1060 days
+index_1_4<-which(pacoche.raw$camera_trap == "CT-RVP-1-4")
+cam_1_4<-pacoche.raw[index_1_4, ] # make data frame using the cam
+pacoche.raw<-pacoche.raw[-index_1_4 ,] # remove the cam
+cam_1_4<-cam_1_4[-c(1:3),] # borra 3 primeros porblematic 2011
+cam_1_4$camera_trap_start_date<-cam_1_4$camera_trap_start_date  + 1060
+# cam_1_4$camera_trap_end_date<-cam_1_4$camera_trap_end_date  + 1060
+
+ 
+## fix 1-1 Time difference of 114 days days
+index_1_1<-which(pacoche.raw$camera_trap == "CT-RVP-1-1")
+cam_1_1<-pacoche.raw[index_1_1, ] # make data frame using the cam
+pacoche.raw<-pacoche.raw[-index_1_1 ,] # remove the cam
+ # cam_1_3$camera_trap_end_date<-as.Date("2014-12-01", format="%Y-%m-%d")
+cam_1_1$photo_date2<-cam_1_1$photo_date2 + 118
+cam_1_1$camera_trap_start_date<-cam_1_1$camera_trap_start_date  + 118
+cam_1_1$camera_trap_end_date<-cam_1_1$camera_trap_end_date  + 118
+
+
+ #################################
+# Fix coord problem
+# A camera has coord wrong
+# CT-RVP-2-13  has -80.94619 -1.07908
+# but should be   -80.89461 -1.07908 
+# Fix 
+################################
+# identify the problem
+# index_problem_2011<-which(pacoche.raw$camera_trap_start_date == "2013-11-11")
+# problem_2011<-pacoche.raw[index_problem_2011,]
+# unique(problem_2011$camera_trap)
+
+# # fix 3-3 cord problem
+ index_3_3<-which(pacoche.raw$camera_trap == "CT-RVP-3-3")
+ cam_3_3<-pacoche.raw[index_3_3, ] # make data frame using the cam
+ pacoche.raw<-pacoche.raw[-index_3_3 ,] # remove the cam
+ cam_3_3$longitude<- -80.89461
+ 
+ 
+ # # fix CR-RVP-1-12 problem  should be CT-RVP1-12
+ index_CR<-which(pacoche.raw$camera_trap == "CR-RVP-1-12")
+ cam_CR<-pacoche.raw[index_CR, ] # make data frame using the cam
+ cam_CR$camera_trap<-as.factor("CT-RVP-1-12") # Rename 
+ pacoche.raw<-pacoche.raw[-index_CR ,] # remove the cam
+ 
+ 
+ 
+ # # fix 3-8  cord problem No se COLOCO--- CAMARA ROBADA
+ # index_3_8<-which(pacoche.raw$camera_trap == "CT-RVP-3-8")
+ # cam_3_8<-pacoche.raw[index_3_8, ] # make data frame using the cam
+ # pacoche.raw<-pacoche.raw[-index_3_8 ,] # remove the cam
+ 
+index_2_9<-which(pacoche.raw$camera_trap == "CT-RVP-2-9")
+cam_2_9<-pacoche.raw[index_2_9, ]
+pacoche.raw<-pacoche.raw[-index_2_9 ,] # remove the cam
+cam_2_9[1,7]<-as.factor("2014-12-08")
+cam_2_9[2,7]<-as.factor("2014-12-08")
+cam_2_9[3,7]<-as.factor("2014-12-08")
+cam_2_9[1,30]<-as.factor("2014-12-08")
+cam_2_9[2,30]<-as.factor("2014-12-08")
+cam_2_9[3,30]<-as.factor("2014-12-08")
+cam_2_9$camera_trap_start_time<-as.factor("08-dec-2014 06:12:22")# 2014-12-08
+cam_2_9$camera_trap_start_date<-as.factor("2014-12-08")
+
+
+
+# 
+# # fix 1-10  # add 31 days since data setup pickup en data 12 and beyond
+# index_1_10<-which(pacoche.raw$camera_trap == "CT-PNM-1-10")
+# cam_1_10<-pacoche.raw[index_1_10, ]
+# pacoche.raw<-pacoche.raw[-index_1_10 ,]
+# 
+# cam_1_10$camera_trap_start_date<-as.Date("2014-09-23", format="%Y-%m-%d") 
+# cam_1_10$camera_trap_end_date<-as.Date("2014-11-05", format="%Y-%m-%d")
+# cam_1_10$photo_date2[c(12:875)]<-cam_1_10$photo_date2[c(12:875)] +31
+# # delete problematic data
+# cam_1_10<-cam_1_10[-24,]
+# cam_1_10<-cam_1_10[-25,]
+# 
+# # fix 3-10  # restar 30 dias
+# index_3_10<-which(pacoche.raw$camera_trap == "CT-PNM-3-10")
+# cam_3_10<-pacoche.raw[index_3_10, ]
+# pacoche.raw<-pacoche.raw[-index_3_10 ,]
+# 
+# cam_3_10$camera_trap_start_date<-as.Date("2015-01-27", format="%Y-%m-%d") 
+# cam_3_10$camera_trap_end_date<-as.Date("2015-03-15", format="%Y-%m-%d")
+# # borra los primeros 30 problematicos con fecha 2011
+# cam_3_10<-cam_3_10[-c(1:30),]
+# cam_3_10$photo_date2<-cam_3_10$photo_date2  - 30
+# 
+# 
+# # fix 3-07 # add difference of 365 days
+# index_3_07<-which(pacoche.raw$camera_trap == "CT-PNM-3-07")
+# cam_3_07<-pacoche.raw[index_3_07, ]
+# 
+# pacoche.raw<-pacoche.raw[- index_3_07 ,]
+# cam_3_07$camera_trap_start_date<-as.Date("2015-01-27", format="%Y-%m-%d")
+# cam_3_07$camera_trap_end_date<-as.Date("2015-03-11", format="%Y-%m-%d")
+# cam_3_07$photo_date2<- cam_3_07$photo_date2 + 365
+### remove from pacoche.raw
+# pacoche.raw<-pacoche.raw[-index_1_07 ,]
+# pacoche.raw<-pacoche.raw[-index_3_10 ,]
+# pacoche.raw<-pacoche.raw[-index_3_07 ,]
+
+
+#### Add corrected
+pacoche.raw<-rbind(cam_CR, pacoche.raw, cam_1_3, cam_1_4, cam_2_13, cam_1_1, cam_3_3, cam_2_9)
+# pacoche.raw<-rbind(pacoche.raw, cam_1_10)
+# pacoche.raw<-rbind(pacoche.raw, cam_3_10)
+# pacoche.raw<-rbind(pacoche.raw, cam_3_07)
+
+#  problematic ?
+# which(pacoche.raw$photo_date2 == "2011-11-11")
+# which(pacoche.raw$camera_trap == "CT-PNM-1-10")
+
+# Order by camera
+pacoche.raw <- droplevels(pacoche.raw)
+pacoche.raw$camera_trap<- as.character(pacoche.raw$camera_trap)
+pacoche.ord.index<-order(pacoche.raw$camera_trap) # sort by column index
+pacoche.raw<-pacoche.raw[pacoche.ord.index, ] # ordena
+
+########## extract yr and month
+pacoche.raw$year<-year(pacoche.raw$photo_date2)
+pacoche.raw$month<-month(pacoche.raw$photo_date2)
+
+# problem?
+# which(pacoche.raw$camera_trap_start_date == "2011-11-11")
+# problem_index<- which(pacoche.raw$camera_trap_start_date == "2011-11-11")
+# problema<-pacoche.raw[problem_index,]
+# unique(problema$camera_trap)
+# index_problem<-which(pacoche.raw$camera_trap == "CT-RVP-2-9")
+# problem<-pacoche.raw[index_problem, ]
+# View(problem)
+
+
+################## delete array 4
+# # fix array 4 problem
+index_4_1<-which(pacoche.raw$camera_trap == "CT-RVP-4-1")
+index_4_11<-which(pacoche.raw$camera_trap == "CT-RVP-4-11")
+index_4_14<-which(pacoche.raw$camera_trap == "CT-RVP-4-14")
+index_4_16<-which(pacoche.raw$camera_trap == "CT-RVP-4-16")
+index_4_5<-which(pacoche.raw$camera_trap == "CT-RVP-4-5")
+index_4_6<-which(pacoche.raw$camera_trap == "CT-RVP-4-6")
+index_4_9<-which(pacoche.raw$camera_trap == "CT-RVP-4-9")
+
+cam_4_1<-pacoche.raw[index_4_1, ] # make data frame using the cam
+cam_4_11<-pacoche.raw[index_4_11, ] # make data frame using the cam
+cam_4_14<-pacoche.raw[index_4_14, ] # make data frame using the cam
+cam_4_16<-pacoche.raw[index_4_16, ] # make data frame using the cam
+cam_4_5<-pacoche.raw[index_4_5, ] # make data frame using the cam
+cam_4_6<-pacoche.raw[index_4_6, ] # make data frame using the cam
+cam_4_9<-pacoche.raw[index_4_9, ] # make data frame using the cam
+
+pacoche.arr_1_3<-pacoche.raw[c(-index_4_1, 
+                               -index_4_11,
+                               -index_4_14,
+                               -index_4_16,
+                               -index_4_5,
+                               -index_4_6,
+                               -index_4_9),] # remove the cam
+
+
+ #### write pacoche con 4th array
+# write.csv(x = pacoche.raw, file = "data/Pacoche_arrays_1_a_4.csv")
+# save(pacoche.raw, file = "data/Pacoche_arrays_1_a_4.RData")   
+
+    
+```
+    
+    
+    ```{r calendar1,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE, error=FALSE, message=FALSE, fig.height=11,fig.width=8}
+    f.calendar.yr(dataset = pacoche.raw, yr_toplot = 1)
+    ```
+
+    
+```{r calendar2,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE, error=FALSE, message=FALSE, fig.height=11,fig.width=8}
+    f.calendar.yr(dataset = pacoche.raw, yr_toplot = 2)
+    ```
+    
+    # Especies registradas
+    
+    Las especies registradas en Pacoche fueron xxx
+    
+    
+    ```{r sps,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,error=FALSE, message=FALSE, results='asis'}
+    library(xtable)
+    library(knitr)
+    library(dplyr)
+    mat.per.sp<-f.matrix.creator2(data = pacoche.raw,year = 2014)
+    sp.names<-names(mat.per.sp) # species names
+    
+    # counting how many (total) records per species by all days
+    cont.per.sp<-data.frame(row.names = sp.names)
+    row.per.sp<-as.data.frame(matrix(nrow = length(sp.names), ncol=c(59)))
+    col.per.sp<-as.data.frame(matrix(nrow = length(sp.names), ncol=c(161)))
+    rownames(row.per.sp)<-sp.names
+    rownames(col.per.sp)<-sp.names
+    
+    for (i in 1:length(mat.per.sp)){
+      cont.per.sp[i,1]<-sum(apply(as.data.frame(mat.per.sp [[i]]),FUN=sum,na.rm=T, MARGIN = 1))
+      
+      row.per.sp[i,]<-apply(mat.per.sp[[i]],1, function(x) sum(x, na.rm=T))
+      # row.per.sp[i,which(row.per.sp[i,]>0)]<-1 # convert to presence absence  1 and 0
+      col.per.sp[i,]<-apply(mat.per.sp[[i]],2, function(x) sum(x, na.rm=T))
+      
+    }
+    
+    cont.per.sp$especie<-rownames(cont.per.sp)
+    colnames(cont.per.sp)<-c("Numero_de_registros","especie")
+    # xtable(arrange(df = cont.per.sp, desc(Numero_de_registros)))
+    kable(arrange(cont.per.sp, desc(cont.per.sp[,1])))
+    
+    
+    ```
+    
+## Distribucion posterior de la riqueza de especies
+    
+    Riqueza de especies y acumulación, modelando la ocurrencia y la detectabilidad. Este análisis sigue el método de Dorazio et al. [-@Dorazio2006].
+    
+    ```{r richnessmacha,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,fig.height=5,fig.width=8,message=FALSE}
+    
+    source("C:/Users/Diego/Documents/GitHub/Pacoche_unmakerd/code/MultiSpeciesSiteOcc.R")
+    
+    # library(dplyr)
+    # colapse mat in: sp by row site by column
+    
+    row.per.sp<-row.per.sp[-1,] # elimina especie vacia del comienzo
+    
+    X1 = as.matrix(row.per.sp) # col.per.sp por dias y row.per.sp por sitios (camaras)
+    nrepls = 90 #dias 
+    especies = MultiSpeciesSiteOcc(nrepls, X1)
+    
+    # summary(especies$fit$sims.matrix)
+    
+    alpha.post = especies$fit$sims.matrix[,"alpha"]
+    sigmaU.post = especies$fit$sims.matrix[,"sigma.u"]
+    N.post = especies$fit$sims.matrix[,"N"]
+    
+    nsites = 60 
+    cum_sp<-CumNumSpeciesPresent(nsites, alpha.post, sigmaU.post, N.post)
+    
+    #histogram of posteriors
+    hist(especies$fit$sims.matrix[,"N"],breaks = c(35:75), xlab="Number of mammal species", ylab="Relative frecuency", main="")
+    abline(v=38,col="blue", lty = 2) # -> lines.histogram(*)
+    
+    
+    
+    ```
+    
+    La media de la distribucion posterior es `r mean(especies$fit$sims.matrix[,"N"])`. Mientras que la mediana `r median(especies$fit$sims.matrix[,"N"])`. 
+    
+    
+    # Covariables 
+    
+    Inicialmente se probó con cinco covariables para ajustar los modelos de ocupación. Estas cinco covariables fueron: Altitud (elev), Pendiente (slope) y Distancia a la carretera pavimentada (dis_rd) como covariables geográficas y altura del dosel, cobertura del dosel y área basal como covariables que se midieron momento de retirar las cámaras. Estas medidas se tomaron usando la metodología del cuadrante centrado en un punto. 
+    
+    La Altitud se obtuvo de una imagen SRTM del repositorio de [CGIAR](http://srtm.csi.cgiar.org/). La pendiente se infirió a partir de la altitud y la distancia a las carreteras se obtuvo de un mapa del Ministerio del Medio Ambiente del Ecuador.
+    
+    
+    
+    ```{r covs,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE, error=FALSE, message=FALSE, fig.height=10,fig.width=8}
+    
+    library(raster)
+    library(rgdal)
+    library(dismo)
+    library(biomod2)
+    library(spatstat)
+    library(sp)
+    library(dplyr)
+    library(maptools)
+    
+    # machalilla.raw<-read.csv("C:/code/ULEAM/Infor_Caract/Data/CT-PNM-2014.csv") # ojo falta la camara 3-12
+    
+    
+long<-unique(pacoche.raw$longitude)
+lati<-unique(pacoche.raw$latitude)
+centercoord<-c(mean(subset(long, long<=1)),mean(unique(subset(lati, lati<=1))))
+coordsubset<-subset(pacoche.raw,select = c(camera_trap,longitude,latitude,first_name_set_camera))
+
+# get elevation
+# elevation<-getData(name = "SRTM",lon=centercoord[1], lat=centercoord[2])
+#################################
+# get elevation
+################################
+
+# elevationpaco<-getData('SRTM',lon=centercoord[1], lat=centercoord[2])
+
+ # read elevation from disk
+elevationpaco<- raster("C:/Users/Diego/Documents/GitHub/machalilla/Machalilla_paper/code/srtm_20_13.tif")
+
+cam.cords<-as.data.frame(distinct(coordsubset))
+coordinates(cam.cords) <- ~longitude+latitude #make sppatial data fram
+geo <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0") #def cord
+proj4string(cam.cords)<-geo # set cords
+
+e<-extent (-80.917,-80.788, -1.190, -1.019)
+elevation.crop<-crop(elevationpaco, e)
+
+plot(elevation.crop)
+# plot(cam.cords, add=T)
+points(cam.cords, pch=20, cex=.1) 
+
+slope<-terrain(elevation.crop, opt='slope', unit='degrees', neighbors=4)
+
+
+cam.cords.sp<-SpatialPoints(cam.cords)
+proj4string(cam.cords.sp)<-geo 
+
+
+############################
+# park limit
+############################
+
+
+# limit <- readShapeSpatial("C:/Users/CaracterizaciónD/Documents/GitHub/pacoche/data/pacoche.shp")
+# proj4string(limit)<-geo #put georef
+# e<-extent (-80.9,-80.8, -1.190, -1.02)
+# limit.ow<-as(limit, "SpatialLines",ext = e) # make SpatialLines
+
+# limit.psp<-as.psp(limit.ow)
+
+# road.density<-density.psp(limit.psp,edge = T)
+# road.density.im<-as.im(road.density)
+
+# roadpol <- readShapeSpatial("shp\\machalilla_limitclip.shp")
+# names(roadpol)<-"dist_rd"
+# proj4string(roadpol)<-geo
+# dist_rd<-over(x = cam.cords, y = roadpol)
+# add to table
+# cam.cords$dist_rd<-as.numeric(dist_rd[,1])
+
+
+
+
+pacochelimit <- readShapePoly(fn="C:/Users/Diego/Documents/GitHub/Pacoche_unmakerd/data/pacoche", IDvar="boundary")
+
+geo <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0") #def cord
+proj4string(pacochelimit)<-geo # set cords
+
+
+
+plot(elevation.crop)
+plot(pacochelimit, add=T)
+points(cam.cords, pch=20, cex=.1) 
+
+################################### 
+### get just cameras
+
+just.cam1<-dplyr::select(pacoche.raw, camera_trap, latitude, longitude)
+just.cams<-dplyr::distinct(just.cam1)
+
+coordinates(just.cams) <- ~longitude+latitude #make spatial data frame
+proj4string(just.cams)<-geo # set cords
+
+############ over
+cam_in_out<-over(x = just.cams, y = pacochelimit) #cam.cords
+# cam_in_out<-over(x = cam.cords, y = pacochelimit)
+# add camera name to table
+cam_in_out$camera_trap<-just.cams$camera_trap
+
+index.in<-which(cam_in_out$boundary == "protected_area")
+index.out<-which(is.na(cam_in_out$boundary))
+
+just.in<-just.cams[index.in,]
+just.out<-just.cams[index.out,]
+
+
+##### cuantas camaras in
+length(index.in)
+
+##### cuantas camaras out
+length(index.out)
+
+######## plot to check
+plot(just.out, col="red" )
+plot(just.in,  add=T)
+plot(pacochelimit, add=T)
+
+
+plot(just.in, col="red")
+plot(pacochelimit, add=T)
+text(just.out, labels=just.out$camera_trap, cex = .5)
+
+
+plot(just.out, col="red")
+plot(pacochelimit, add=T)
+text(just.out, labels=just.out$camera_trap, cex = .5)
+
+############ add new column in_out and merge
+# cam.in<-as.data.frame(just.in)
+just.in$in_out<-"in"
+
+# cam.out<-as.data.frame(just.out)
+just.out$in_out<-"out"
+
+cam.cords<-rbind(just.in,just.out)
+
+############# select by vector
+
+pacoche.in<-pacoche.raw[is.element(pacoche.raw$camera_trap, just.in$camera_trap),]
+pacoche.out<-pacoche.raw[is.element(pacoche.raw$camera_trap, just.out$camera_trap),]
+
+
+
+
+
+# roadpol.ow<-as(as(roadpol, "SpatialPolygons"), "owin") # make owin
+
+
+
+#####################################################
+## Deforestation
+####################################################
+
+defore<-raster("C:/Users/Diego/Documents/GitHub/pacoche/data/pacoche_thresholded_annual.tif",layer=13) #_annual_r3.tif antes
+######### adjust to same altutude extent
+# plot(deforestado, col="red", add=T)
+# dist.def.crop<-crop(defore, e)# cut by the extent
+dist.def.e <- extend(defore, e)
+# dist.def.r <- resample(dist.def.e, elevation.crop, method='bilinear') # resample to put equal to altitude
+# dist.def.e <- extend(dist.def.crop, e) 
+# dist.def.m <- mask(dist.def.r, elevation.crop)  
+m <- c(0, 2, NA,  4, 6, NA) # matriz de reclasificacion
+rclmat <- matrix(m, ncol=3, byrow=TRUE) # put as mat
+deforestado <- reclassify(dist.def.e, rclmat)
+# plot(deforestado, col="red", add=T)
+dist.def_paco <- distance(deforestado) # make distance from not raster category 3 to fill NAs
+writeRaster(dist.def_paco, filename="dist_def_paco_r3.tif", format="GTiff", overwrite=TRUE)
+plot(dist.def_paco)
+dist.def.r <- resample(dist.def_paco, elevation.crop, method='bilinear')
+plot(dist.def.r)
+dist.def.m <- mask(dist.def.r, elevation.crop)
+plot(dist.def.m)
+plot(cam.cords, add=T)
+text(just.out, labels=cam.cords$camera_trap, cex = .5)
+
+# plot(deforestado, col="red", add=T)
+
+#######################
+######## read road #####
+#######################
+roadline <-readShapeLines("C:/Users/Diego/Documents/CodigoR/Pacoche_unmakerd/data/shp/roads.shp")
+
+utm<-CRS("+proj=utm +zone=17 +south +datum=WGS84 +units=m +no_defs") # UTM Ecuador
+
+proj4string(roadline)<-utm
+# roadline.m <- mask(roadline, elevation.crop) # mask by elevcrop
+roadline.spline<-as(roadline, "SpatialLines")
+roads.psp<-as.psp(roadline) # convert psp
+road_dist<-distmap.psp(roads.psp) # makes a distance map
+road_dist_ras<-raster(road_dist) # makes raster
+proj4string(road_dist_ras) <- utm
+
+#### project the raster from utm to geo
+pr3 <- projectExtent(road_dist_ras, geo) # adjust extent
+res(pr3) <- 0.0008333333 # Adjust the cell size = resolution
+road_dist_ras_geo <- projectRaster(road_dist_ras, pr3) # now project
+
+# mask the road map
+dist.road.r <- resample(road_dist_ras_geo, elevation.crop, method='bilinear')
+dist.road.m <- mask(dist.road.r, elevation.crop)
+
+
+# etract values ##### extract values from raster
+dist.def.ovr <- extract(dist.def.m, cam.cords, method='bilinear') 
+index<-which(is.na(dist.def.ovr)) # detect NA. Means cam is in deforested
+dist.def.ovr [index]<-0 # camera in distance cero to deforested
+
+# etract values ##### extract values from raster
+elev.ovr <- extract(elevation.crop, cam.cords, method='bilinear')
+slope.ovr <- extract(slope, cam.cords, method='bilinear')
+dist_rd<-extract (road_dist_ras_geo, cam.cords, method='bilinear')
+
+# add to table
+cam.cords$elev<-elev.ovr
+cam.cords$slope<-slope.ovr
+cam.cords$dist_rd<-as.numeric(dist_rd)
+cam.cords$dist_def<-dist.def.ovr
+
+cam_covs1<-as.data.frame(cam.cords)  #### make dataframes
+cam.and.covs1<-as.data.frame(cam.cords)
+
+est.veget<-read.csv("C:/Users/Diego/Documents/GitHub/pacoche/data/estructVegetPacoche.csv") # read table
+
+cam_index<-order(est.veget$camera) # sort by column index
+cam.est.veget<-est.veget[cam_index, ] # ordena
+
+cam_index2<-order(cam_covs1$camera_trap)
+cam.geo.covs<-cam_covs1[cam_index2, ] ######Alll covs
+
+##################################
+## Stack rasters
+##################################
+
+cov.stack<-stack(elevation.crop, slope, dist.def.m, dist.road.m)
+names(cov.stack) <- c("elev", "slope", "dist_def", "dist_rd")
+
+##### standarize maps
+elev.standarized  <- (cov.stack[["elev"]] - mean(cam.and.covs1[,5])) / sd(cam.and.covs1[,5])
+slope.standarized <- (cov.stack[["slope"]] - mean(cam.and.covs1[,6])) / sd(cam.and.covs1[,6])
+dist_rd.standarized <- (cov.stack[["dist_rd"]] - mean(cam.and.covs1[,7])) / sd(cam.and.covs1[,7])
+dist_def.standarized <- (cov.stack[["dist_def"]] - mean(cam.and.covs1[,8])) / sd(cam.and.covs1[,8])
+
+cov.stack.standarized<-stack(elev.standarized, slope.standarized,  dist_def.standarized, dist_rd.standarized)
+
+
+######### remove camara robada ?
+# index_3_8<-which(cam.est.veget$camera == "CT-RVP-3-8")
+# cam_3_8<-cam.est.veget[index_3_8, ] # make data frame using the cam
+# est.veget<-cam.est.veget[-index_3_8 ,] # remove the cam
+colnames(est.veget)[1] <- "camera_trap" # rename camera by camera_trap
+ 
+# falta tipo de habitat (bosque humedo seco)
+ ############  fix desfase! OJO!!!!!!!!!!!!!!!!!!!!!!!!!
+# cam.and.covs<-cbind(as.data.frame(cam.cords), est.veget)
+cam.and.covs<- merge(est.veget,cam.geo.covs,by="camera_trap") # merge by camera_trap
+
+cam.and.covs.scaled <-cbind(scale(cam.and.covs[2],center = T,scale = T),
+                            scale(cam.and.covs[3],center = T,scale = T),
+                            scale(cam.and.covs[4],center = T,scale = T),
+                            scale(cam.and.covs[8],center = T,scale = T),
+                            scale(cam.and.covs[9],center = T,scale = T),
+                            scale(cam.and.covs[10],center = T,scale = T),
+                            scale(cam.and.covs[11],center = T,scale = T),
+                            cam.and.covs[1], cam.and.covs[5], cam.and.covs[6],
+                            cam.and.covs[7])
+                            #scale(cam.and.covs[12],center = T,scale = T))
+
+  
+
+##### standarize maps
+# elev.standarized  <- (cov.stack[["elev"]] - mean(cam.and.covs[,8])) / sd(cam.and.covs[,8])
+# slope.standarized <- (cov.stack[["slope"]] - mean(cam.and.covs[,9])) / sd(cam.and.covs[,9])
+# # dist_dr.standarized <- (cov.stack[["dist_rd"]] - mean(cam.and.covs[,7])) / sd(cam.and.covs[,7])
+# dist_def.standarized <- (cov.stack[["dist_def"]] - mean(cam.and.covs[,10])) / sd(cam.and.covs[,10])
+# 
+# cov.stack.standarized<-stack(elev.standarized, slope.standarized, dist_def.standarized)
+#  
+
+
+    
+    ```
+    
+    
+    ```{r functions,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,results='asis', error=FALSE, message=FALSE}
+    
+    f.sp.occu.plot.mat <- function(sp_number){
+      ########################
+      ### shrink to 15
+      ########################
+      
+      library(unmarked)
+      
+      sp15<-f.shrink.matrix.to15(matrix = mat.per.sp[[sp_number]])
+      
+      
+      ########################
+      ### make unmarked object 
+      ########################
+      
+      sp_UMF <- unmarkedFrameOccu(sp15)
+      
+      plot(sp_UMF, panels=1)
+      # title(main=as.character(sp.names[sp_number]))
+      
+    }
+    
+    ##########################################
+    #########  Models 
+    ##########################################
+    
+    f.sp.occu.models <- function(sp_number){
+      ########################
+      ### shrink to 15
+      ########################
+      
+      library(unmarked)
+      library(knitr)
+      
+      sp15<-f.shrink.matrix.to15(matrix = mat.per.sp[[sp_number]])
+      
+      
+      ########################
+      ### make unmarked object 
+      ########################
+      
+      sp_UMF <- unmarkedFrameOccu(sp15)
+      
+      # plot(sp_UMF, panels=1)
+      # title(main=as.character(sp.names[sp_number]))
+      
+      # add some  covariates
+      siteCovs(sp_UMF) <- cam.and.covs
+      
+      #######################
+      ## occu models 
+      #######################
+      
+      #  covariates of detection and occupancy in that order.
+      fm0 <- occu(~ 1 ~ 1, sp_UMF) 
+      fm1 <- occu(~ 1 ~ elev, sp_UMF)
+      fm2 <- occu(~ 1 ~ slope, sp_UMF)
+      fm3 <- occu(~ 1 ~ dist_def, sp_UMF)
+      fm4 <- occu(~ 1 ~ dist_rd, sp_UMF)
+      fm5 <- occu(~ 1 ~ canopy_h, sp_UMF)
+      fm6 <- occu(~ 1 ~ canopy_c, sp_UMF)
+      fm7 <- occu(~ 1 ~ basal_a, sp_UMF)
+      fm8 <- occu(~ 1 ~ in_out, sp_UMF)
+      fm9 <- occu(~ elev ~ elev, sp_UMF)
+      fm10 <- occu(~ elev ~ slope, sp_UMF)
+      fm11 <- occu(~ elev ~ dist_def, sp_UMF)
+      fm12 <- occu(~ elev ~ dist_rd, sp_UMF)
+      fm13 <- occu(~ elev ~ canopy_h, sp_UMF)
+      fm14 <- occu(~ elev ~ canopy_c, sp_UMF)
+      fm15 <- occu(~ elev ~ basal_a, sp_UMF)
+      fm16 <- occu(~ elev ~ in_out, sp_UMF)
+      fm17 <- occu(~ basal_a ~ elev, sp_UMF)
+      fm18 <- occu(~ basal_a ~ slope, sp_UMF)
+      fm19 <- occu(~ basal_a ~ dist_def, sp_UMF)
+      fm20 <- occu(~ basal_a ~ dist_rd, sp_UMF)
+      fm21 <- occu(~ basal_a ~ canopy_h, sp_UMF)
+      fm22 <- occu(~ basal_a ~ canopy_c, sp_UMF)
+      fm23 <- occu(~ basal_a ~ basal_a, sp_UMF)
+      fm24 <- occu(~ basal_a ~ in_out, sp_UMF)
+
+      
+      # put the names of each model
+      models <- fitList(
+        'p(.)psi(.)' = fm0,
+        'p(.)psi(elev)' = fm1,
+        'p(.)psi(slope)' = fm2,
+        'p(.)psi(dist_def)' = fm3,
+        'p(elev)psi(elev)' = fm4,
+        'p(elev)psi(slope)' = fm5,
+        'p(elev)psi(dist_def)' = fm6,
+        'p(basal_a)psi(.)' = fm7,
+        'p(basal_a)psi(elev)' = fm8,
+        'p(basal_a)psi(canopy_c)' = fm9,
+        'p(.)psi(canopy_c)' = fm10,
+        'p(.)psi(in_out+elev)' = fm11,
+        'p(.)psi(in_out+dist_def)' = fm12
+      )
+      
+      ms <- modSel(models)
+      # (ms)
+      
+      #This part store some models coeficients in a table (mat_models) to compare on screen
+      ms_AIC_models<-as.data.frame(ms@ Full[1], row.names = NULL) #store model name
+      modelo<-paste("_", as.character(as.character(sp.names[sp_number])), 
+                    "_", " models", sep="") # fix model name addin species
+      ma_nPars<-as.data.frame(ms@Full$nPars) #store parameter number
+      ms_AIC_values<- as.data.frame(ms@Full$AIC) #store AIC values
+      ms_AIC_delta<- as.data.frame(ms@Full$delta) #store AIC delta values
+      ms_AIC_AICwt<- as.data.frame(ms@Full$AICwt) #store AIC wt values
+      ms_AIC_cumultw<-as.data.frame(ms@Full$cumltvWt) #store model name
+      ms_m<-as.data.frame(row.names(ms_AIC_models)) #store m number
+      ms_formula<- as.data.frame(ms@Full$formula) #store model formula
+      mat_models <- cbind(ms_AIC_models, ma_nPars, ms_AIC_values, ms_AIC_delta, ms_AIC_AICwt, ms_AIC_cumultw) #paste in matrix
+      colnames(mat_models)<-c(modelo, "nPars",'AIC', "delta", "AICwt", "cumltvWt") # change row names
+      
+      ##Print los 7 primeros modelos
+      xtable(mat_models)
+      kable(mat_models)
+      # print(spname)
+      # print (mat_models[c(1:7),])
+      # as.character(sp.names[sp_number])
+      
+    }
+    
+    ##########################################
+    #########  predict 
+    ##########################################
+    
+    #  covariates of detection and occupancy in that order.
+#     # fm8 <- occu(~ basal_a ~ elev, sp_UMF)
+#     
+#     chisq <- function(fm) {
+#       umf <- getData(fm)
+#       y <- getY(umf)
+#       y[y>1] <- 1
+#       sr <- fm@sitesRemoved
+#       if(length(sr)>0)
+#         y <- y[-sr,,drop=FALSE]
+#       fv <- fitted(fm, na.rm=TRUE)
+#       y[is.na(fv)] <- NA
+#       sum((y-fv)^2/(fv*(1-fv)), na.rm=TRUE)
+#     }
+#     
+#     (pb <- parboot(fm12, statistic=chisq, nsim=500, report=5))
+#     plot(pb)
+#     re <- ranef(fm12)
+#     EBUP <- bup(re, stat="mode")
+#     CI <- confint(re, level=0.9)
+#     sum(bup(re, stat="mode"))
+#     
+#     backTransform(fm12) #only works for no covariates
+#     
+#     # estimate detection effect at obsvars= 20
+#     (lc <- linearComb(fm8['det'],c(1,20)))
+#     (btlc <- backTransform(lc))
+#     confint(btlc, level = 0.9)
+#     
+#     # estimate occupancy effect at obsvars= 1000
+#     (lc <- linearComb(fm8['state'],c(1,100)))
+#     (btlc <- backTransform(lc))
+#     confint(btlc, level = 0.9)
+#     
+#     
+#     confint(fm8, type='det', method = 'normal')
+#     confint(fm8, type='det', method = 'profile')
+    
+    newdata.in <- data.frame(basal_a=seq(-1.1172, 4.1706, length=100), 
+                          elev=seq(-1.95634, 1.67393, length=100),
+                          canopy_h=seq(-1.5119, 2.8474, length=100),
+                          canopy_c=seq(-1.9770, 1.6965, length=100),
+                          slope=seq(-1.57302, 2.14090 , length=100),
+                          dist_def=seq(-1.3035 , 2.5716, length=100), 
+                          in_out = c(rep("in", 99), rep("out", 1) ) ) #
+    
+    newdata.out <- data.frame(basal_a=seq(-1.1172, 4.1706, length=100), 
+                          elev=seq(-1.95634, 1.67393, length=100),
+                          canopy_h=seq(-1.5119, 2.8474, length=100),
+                          canopy_c=seq(-1.9770, 1.6965, length=100),
+                          slope=seq(-1.57302, 2.14090 , length=100),
+                          dist_def=seq(-1.3035 , 2.5716, length=100),
+                          in_out = c(rep("out", 99), rep("in", 1) ))
+    
+    
+    
+#     predict(fm12, type="state", newdata=newdata.in)
+#     predict(fm12, type="state", newdata=newdata.out)
+#     
+#     predict(fm12, type="det", newdata=newdata)
+#     
+    
+    
+    ```
+    
+    
+    #Algebra del modelo de ocupación
+    
+    
+    Cada especie tiene una historia de detección que se usó para modelar la ocupación. Esta se calculó teniendo en cuenta que cada sitio tiene también su propia historia de detección. La historia de detección puede ser representada como una ecuación matemática intuitiva, donde la especie objetivo fue detectada como una secuencia de unos y ceros de cada día de detección en cada cámara, con uno si se tomó una foto ese día y cero si no se tomó foto. Ese sitio (cámara) estará ocupado ($\psi$), con una probabilidad que se calcula de su historia de detección de la siguiente forma para un sitio con una historia de detección 1001:
+      
+      $$Pr(H_{i} = 1001) =\psi * p_{1} (1-p_{2}) (1-p_{3}) p_{4}$$
+      
+      
+      Mientras que un sitio que tuvo una historia de detección donde no se registró la especie podría ser un sitio que no está ocupado por la especie (1-$\psi$) o estar ocupado pero la especie nunca detectada lo cual sería:
+      
+      $$Pr(H_{i} = 0000) =\psi * (1-p_{1}) (1-p_{2}) (1-p_{3}) (1-p_{4}) \textup{ or } \psi \prod_{1}^{4} (1-p_{j}) + (1-\psi)$$
+      
+      Matemáticamente podríamos combinar todas las historias de detección en un modelo de máxima verosimilitud como: 
+      
+      $$L(\psi, p\mid H_{1}...H_{x+1}) = \prod_{1}^{x+1} \textup{Pr} (H_{i})$$
+      
+      Estos modelos pueden incorporar covariables que interactúan con la ocupación y la probabilidad de ocupación y pueden ser resueltos con la ayuda del paquete unmarked del lenguaje estadístico R.
+    
+    
+#Modelos de ocupacion por especie
+## La Cabra (_Cuniculus paca_)
+### Matriz de datos colapsada a 15 dias
+    
+    ```{r mat_sp3,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,error=FALSE, message=FALSE, fig.height=4,fig.width=7}
+    f.sp.occu.plot.mat(sp_number = 3)
+    ```
+    
+    ### Selección de Modelos
+    ```{r modelo_sps3,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE, error=FALSE, message=FALSE, results='asis'}
+    print(as.character(sp.names[sp_number=3]))
+    f.sp.occu.models(sp_number = 3)
+    ```
+    
+    #### analisis _Cuniculus paca_ p(canopy_c)psi(dist_def)  sp=3 
+```{r cuniculus, cache=FALSE,warning=FALSE,eval=TRUE, echo=FALSE,results='asis'}
+    
+
+    sp_number<-3
+    
+    sp15<-f.shrink.matrix.to15(matrix = mat.per.sp[[sp_number]])
+    
+    
+    ########################
+    ### make unmarked object 
+    ########################
+    require(unmarked)
+    sp_UMF <- unmarkedFrameOccu(sp15)
+    
+    # plot(sp_UMF, panels=1)
+    # title(main=as.character(sp.names[sp_number]))
+     
+    # add some  covariates
+    siteCovs(sp_UMF) <- cam.and.covs.scaled
+    
+    #######################
+    ## occu models 
+    #######################
+    
+    #  covariates of detection and occupancy in that order.
+    fm0 <- occu(~ 1 ~ 1, sp_UMF) 
+    fm1 <- occu(~ elev ~ elev, sp_UMF)
+    fm2 <- occu(~ elev ~ slope, sp_UMF)
+    # fm3 <- occu(~ elev ~ dist_rd, sp_UMF)
+    fm4 <- occu(~ elev ~ dist_def, sp_UMF)
+    # fm5 <- occu(~ elev ~ dist_def+in_out, sp_UMF)
+    fm6 <- occu(~ basal_a ~ basal_a, sp_UMF)#, starts = c(0.1,0.1,0.1,0.1))
+    fm7 <- occu(~ basal_a ~ elev, sp_UMF)
+    fm8 <- occu(~ basal_a ~ slope, sp_UMF)
+    # fm9 <- occu(~ basal_a ~ dist_rd, sp_UMF)
+    fm10<- occu(~ basal_a ~ dist_def, sp_UMF)
+    # fm11 <- occu(~ basal_a ~ dist_def+in_out, sp_UMF)
+    fm12 <- occu(~ canopy_c ~ canopy_c, sp_UMF, starts = c(0.1,0.1,0.1,0.1))
+    fm13 <- occu(~ canopy_c ~ elev, sp_UMF)
+    fm14 <- occu(~ canopy_c ~ slope, sp_UMF)
+    # fm15 <- occu(~ canopy_c ~ in_out, sp_UMF)
+    fm16 <- occu(~ canopy_c ~ dist_def, sp_UMF, starts = c(0.1,0.1,0.1,0.1))
+    # fm17 <- occu(~ canopy_c ~ dist_def+in_out, sp_UMF, starts = c(0.1,0.5,0.7,0.8,1))
+
+        models <- fitList(
+      'p(.)psi(.)' = fm0,
+      'p(elev)psi(elev)' = fm1,
+      'p(elev)psi(slope)' = fm2,
+      # 'p(elev)psi(dist_rd)' = fm3,
+      'p(elev)psi(dist_def)' = fm4,
+      # 'p(elev)psi(dist_def+dist_rd)' = fm5,
+      'p(basal_a)psi(basal_a)' = fm6,
+      'p(basal_a)psi(elev)' = fm7,
+      'p(basal_a)psi(slope)' = fm8,
+      # 'p(basal_a)psi(dist_rd)' = fm9,
+      'p(basal_a)psi(dist_def)' = fm10,
+      # 'p(basal_a)psi(dist_def+in_out)' = fm11,
+      'p(canopy_c)psi(canopy_c)' = fm12,
+      'p(canopy_c)psi(elev)' = fm13,
+      'p(canopy_c)psi(slope)' = fm14,
+      # 'p(canopy_c)psi(in_out)' = fm15,
+      'p(canopy_c)psi(dist_def)' = fm16
+      # 'p(canopy_c)psi(dist_def+in_out)' = fm17
+      )
+   
+ modSel(models)  
+    
+    
+  #colnames(newCovs)<- c("site.canopy.s", "date", "time")
+  E.p <- predict(fm16, type="det", newdata=newdata.out, appendData=TRUE)# type puede ser:det psi, col, ext
+  # head(E.p)
+  
+  
+  # Plot it############## detectability
+  plot(Predicted ~ canopy_c, E.p, type="l", ylim=c(-0.1,1),
+       xlab="Canopy cover (standardized)",
+       ylab="Expected detectability")# Expected det
+  lines(lower ~ canopy_c, E.p, type="l", col=gray(0.5))
+  lines(upper ~ canopy_c, E.p, type="l", col=gray(0.5))
+ 
+############## detectability
+     
+  # Plot it again, but this time convert the x-axis back to original scale
+  plot(Predicted ~ canopy_c, E.p, type="l", ylim=c(0,1), col="blue",
+       xlab="Canopy cover (%)",
+       ylab="Detectability",
+       xaxt="n")
+  xticks <- -1:2 #  see wich number equals to var name using: colnames(cam.and.covs)
+  xlabs <- xticks*sd(cam.and.covs[,3]) + mean(cam.and.covs[,3]) #Use the mean and sd of original value to change label name
+  axis(1, at=xticks, labels=round(xlabs, 1))
+  lines(lower ~ canopy_c, E.p, type="l", col=gray(0.5))
+  lines(upper ~ canopy_c, E.p, type="l", col=gray(0.5))
+  
+############## occupancy 
+  E.p2 <- predict(fm16, type="state", newdata=newdata.out, appendData=TRUE)# type puede ser:det state
+  # head(E.p)
+  
+  # Plot it standarzed
+  plot(Predicted ~ dist_def, E.p2, type="l", ylim=c(0,1),
+       xlab="Basal area (cm) (standardized)",
+       ylab="Expected Occupancy")# Expected det
+  lines(lower ~ dist_def, E.p2, type="l", col=gray(0.5))
+  lines(upper ~ dist_def, E.p2, type="l", col=gray(0.5))
+  
+  # Plot it again, but this time convert the x-axis back to original scale # see names(cam.and.covs)
+  plot(Predicted ~ dist_def, E.p2, type="l", ylim=c(0,1), col="blue",
+       xlab="Deforestation distance (cm)",
+       ylab="Occupancy",
+       xaxt="n")
+  xticks <- -1:2
+  xlabs <- xticks*sd(cam.and.covs[,10]) + mean(cam.and.covs[,10]) #Use the mean and sd of original value to change label name
+  axis(1, at=xticks, labels=round(xlabs, 1))
+  lines(lower ~ dist_def, E.p2, type="l", col=gray(0.5))
+  lines(upper ~ dist_def, E.p2, type="l", col=gray(0.5))
+  
+  
+############################ 
+########## map
+############################ 
+#   
+# dist_def_map.sd<- cellStats(dist.def_paco, 'sd') 
+# dist_def_map.mean<- cellStats(dist.def_paco, 'mean')
+# g.dist_def_map<-(dist.def_paco - dist_def_map.mean)/dist_def_map.sd #map Scaled by sd
+# s <- raster(nrow=600, ncol=400) # remustrea a mas chico
+# s <- resample(g.dist_def_map, s, method='bilinear')
+# dist_def.stack<-stack(g.dist_def_map)
+# names(dist_def.stack)<-"dist_def"
+# # psioccu_cuniculus <- predict(fm16, type="state", newdata=dist_def.stack)# type puede # take a while patience it is a large file!!! 10 x 10 m = 70 Megas
+
+library(spatial.tools)
+#######################################
+### Occupancy for Tamandua is not spatial
+#######################################  
+
+# Start a cluster for parallel processing. You must install the "snow" package 
+# for this to work. Comment out this line, and the endCluster() line at the end 
+# of this script, if you do NOT want gfcanalysis to run in parallel.
+if (require(snow)) beginCluster()    
+###### Predict
+psioccu_cuniculs <- predict(fm16, type="state", newdata=cov.stack.standarized)# type puede # take a while patience it is a large file!!! 10 x 10 km = 70 Megas
+# psioccu_cuniculs <- predict_rasterEngine(object=fm16, type="state",newdata=cov.stack.standarized.stack)
+
+# Stop the parallel processing cluster
+if (require(snow)) endCluster()
+# try this
+# 
+# library(doParallel) 
+# library(foreach) 
+# #cluster 
+# cl <- makeCluster(detectCores()-2)    #create a cluster 
+# registerDoParallel(cl)                #register the cluster 
+# 
+# #code to be clustered 
+# x <- foreach(i = 1:length(v), .packages = "raster") %dopar% { 
+# resamp <- resample(v[[i]], s, method='bilinear') 
+# psioccu_cuniculs <- predict(fm16, type="state", newdata=cov.stack.standarized)
+# } 
+# 
+# ss <- brick(x) 
+# 
+# #stop the cluster 
+# stopCluster(cl) 
+# 
+
+
+# plot(psioccu_cuniculs) # take a while patience it is a large file!!! 10 x 10 km = 70 Megas
+
+plot(psioccu_cuniculs[[1]])
+library(rasterVis)
+levelplot(psioccu_cuniculs[[1]], par.settings=RdBuTheme) #occupancy
+
+# plot(cam.cords, add=T, col="red")
+# title(main="Occupancy Eira")
+
+# library(colorspace)
+# myTheme=rasterTheme(region=sequential_hcl(10, power=3.3))
+# p <- levelplot(psioccu_cabra2[[1]], par.settings=BuRdTheme) # can be myTheme
+# p + layer(sp.lines(machalilla.limit, lwd=0.8, col='darkgreen'))
+
+# export.asc(x=canopy_map_t, file="D:\\TEAM\\Data\\VB\\covariatesLayers\\canopy_pred.asc")    
+    
+```
+
+
+
+
+## El Cabeza de Mate (_Dasypus novemcinctus_)
+### Matriz de datos colapsada a 15 dias
+
+```{r mat_sp14,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,fig.height=4,fig.width=7}
+f.sp.occu.plot.mat(sp_number = 14)
+```
+
+### Selección de Modelos
+```{r modeo_sps14,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,results='asis'}
+print(as.character(sp.names[sp_number=14]))
+f.sp.occu.models(sp_number = 14)
+```
+
+
+
+#### analisis _Dasypus novemcinctus_ p(canopy_c)psi(slope)  sp=14 
+```{r dasypus ,cache=FALSE,warning=FALSE,eval=TRUE, echo=FALSE,results='asis'}
+    
+
+    sp_number<-14
+    
+    sp15<-f.shrink.matrix.to15(matrix = mat.per.sp[[sp_number]])
+    
+    
+    ########################
+    ### make unmarked object 
+    ########################
+    require(unmarked)
+    sp_UMF <- unmarkedFrameOccu(sp15)
+    
+    # plot(sp_UMF, panels=1)
+    # title(main=as.character(sp.names[sp_number]))
+     
+    # add some  covariates
+    siteCovs(sp_UMF) <- cam.and.covs.scaled
+    
+    #######################
+    ## occu models 
+    #######################
+    
+    #  covariates of detection and occupancy in that order.
+    fm0 <- occu(~ 1 ~ 1, sp_UMF) 
+    fm1 <- occu(~ elev ~ elev, sp_UMF)
+    fm2 <- occu(~ elev ~ slope, sp_UMF)
+    # fm3 <- occu(~ elev ~ dist_rd, sp_UMF)
+    fm4 <- occu(~ elev ~ dist_def, sp_UMF)
+    # fm5 <- occu(~ elev ~ dist_def+in_out, sp_UMF)
+    fm6 <- occu(~ basal_a ~ basal_a, sp_UMF)#, starts = c(0.1,0.1,0.1,0.1))
+    fm7 <- occu(~ basal_a ~ elev, sp_UMF)
+    fm8 <- occu(~ basal_a ~ slope, sp_UMF)
+    # fm9 <- occu(~ basal_a ~ dist_rd, sp_UMF)
+    fm10<- occu(~ basal_a ~ dist_def, sp_UMF)
+    # fm11 <- occu(~ basal_a ~ dist_def+in_out, sp_UMF)
+    fm12 <- occu(~ canopy_c ~ canopy_c, sp_UMF, starts = c(0.1,0.1,0.1,0.1))
+    fm13 <- occu(~ canopy_c ~ elev, sp_UMF)
+    fm14 <- occu(~ canopy_c ~ slope, sp_UMF)
+    # fm15 <- occu(~ canopy_c ~ in_out, sp_UMF)
+    fm16 <- occu(~ canopy_c ~ dist_def, sp_UMF, starts = c(0.1,0.1,0.1,0.1))
+    fm17 <- occu(~ canopy_c ~ dist_def+slope, sp_UMF)#, starts = c(0.1,0.1,0.1,0.1,0.1,0.1))
+
+        models <- fitList(
+      'p(.)psi(.)' = fm0,
+      'p(elev)psi(elev)' = fm1,
+      'p(elev)psi(slope)' = fm2,
+      # 'p(elev)psi(dist_rd)' = fm3,
+      'p(elev)psi(dist_def)' = fm4,
+      # 'p(elev)psi(dist_def+dist_rd)' = fm5,
+      'p(basal_a)psi(basal_a)' = fm6,
+      'p(basal_a)psi(elev)' = fm7,
+      'p(basal_a)psi(slope)' = fm8,
+      # 'p(basal_a)psi(dist_rd)' = fm9,
+      'p(basal_a)psi(dist_def)' = fm10,
+      # 'p(basal_a)psi(dist_def+in_out)' = fm11,
+      'p(canopy_c)psi(canopy_c)' = fm12,
+      'p(canopy_c)psi(elev)' = fm13,
+      'p(canopy_c)psi(slope)' = fm14,
+      # 'p(canopy_c)psi(in_out)' = fm15,
+      'p(canopy_c)psi(dist_def)' = fm16,
+      'p(canopy_c)psi(dist_def+slope)' = fm17
+      )
+   
+ modSel(models)  
+    
+    
+  #colnames(newCovs)<- c("site.canopy.s", "date", "time")
+  E.p <- predict(fm14, type="det", newdata=newdata.out, appendData=TRUE)# type puede ser:det psi, col, ext
+  # head(E.p)
+  
+  
+  # Plot it############## detectability
+  plot(Predicted ~ canopy_c, E.p, type="l", ylim=c(-0.1,1),
+       xlab="Canopy cover (standardized)",
+       ylab="Expected detectability")# Expected det
+  lines(lower ~ canopy_c, E.p, type="l", col=gray(0.5))
+  lines(upper ~ canopy_c, E.p, type="l", col=gray(0.5))
+ 
+############## detectability
+     
+  # Plot it again, but this time convert the x-axis back to original scale
+  plot(Predicted ~ canopy_c, E.p, type="l", ylim=c(0,1), col="blue",
+       xlab="Canopy cover (%)",
+       ylab="Detectability",
+       xaxt="n")
+  xticks <- -1:2 #  see wich number equals to var name using: colnames(cam.and.covs)
+  xlabs <- xticks*sd(cam.and.covs[,3]) + mean(cam.and.covs[,3]) #Use the mean and sd of original value to change label name
+  axis(1, at=xticks, labels=round(xlabs, 1))
+  lines(lower ~ canopy_c, E.p, type="l", col=gray(0.5))
+  lines(upper ~ canopy_c, E.p, type="l", col=gray(0.5))
+  
+############## occupancy 
+  E.p2 <- predict(fm14, type="state", newdata=newdata.out, appendData=TRUE)# type puede ser:det state
+  # head(E.p)
+  
+  # Plot it standarzed
+  plot(Predicted ~ slope, E.p2, type="l", ylim=c(0,1),
+       xlab="Slope (standardized)",
+       ylab="Expected Occupancy")# Expected det
+  lines(lower ~ slope, E.p2, type="l", col=gray(0.5))
+  lines(upper ~ slope, E.p2, type="l", col=gray(0.5))
+  
+  # Plot it again, but this time convert the x-axis back to original scale # see names(cam.and.covs)
+  plot(Predicted ~ slope, E.p2, type="l", ylim=c(0,1), col="blue",
+       xlab="Slope",
+       ylab="Occupancy",
+       xaxt="n")
+  xticks <- -1:2
+  xlabs <- xticks*sd(cam.and.covs[,9]) + mean(cam.and.covs[,9]) #Use the mean and sd of original value to change label name
+  axis(1, at=xticks, labels=round(xlabs, 1))
+  lines(lower ~ slope, E.p2, type="l", col=gray(0.5))
+  lines(upper ~ slope, E.p2, type="l", col=gray(0.5))
+  
+  
+############################ 
+########## map
+############################ 
+  
+# dist_def_map.sd<- cellStats(dist.def_paco, 'sd') 
+# dist_def_map.mean<- cellStats(dist.def_paco, 'mean')
+# g.dist_def_map<-(dist.def_paco - dist_def_map.mean)/dist_def_map.sd #map Scaled by sd
+# s <- raster(nrow=600, ncol=400) # remustrea a mas chico
+# s <- resample(g.dist_def_map, s, method='bilinear')
+# dist_def.stack<-stack(g.dist_def_map)
+# names(dist_def.stack)<-"dist_def"
+# # psioccu_cuniculus <- predict(fm16, type="state", newdata=dist_def.stack)# type puede # take a while patience it is a large file!!! 10 x 10 m = 70 Megas
+
+library(spatial.tools)
+#######################################
+### Occupancy map
+#######################################  
+
+
+
+
+# Start a cluster for parallel processing. You must install the "snow" package 
+# for this to work. Comment out this line, and the endCluster() line at the end 
+# of this script, if you do NOT want gfcanalysis to run in parallel.
+if (require(snow)) beginCluster()    
+###### Predict
+psioccu_cdasypus <- predict(fm14, type="state", newdata=cov.stack.standarized)# type puede # take a while patience it is a large file!!! 10 x 10 km = 70 Megas
+# psioccu_dasypus <- predict_rasterEngine(fm16, type="state",newdata=dist_def.stack)
+
+# Stop the parallel processing cluster
+if (require(snow)) endCluster()
+
+
+
+# plot(psioccu_cuniculs) # take a while patience it is a large file!!! 10 x 10 km = 70 Megas
+
+plot(psioccu_cdasypus[[1]])
+library(rasterVis)
+levelplot(psioccu_cdasypus[[1]], par.settings=RdBuTheme) #occupancy
+
+# plot(cam.cords, add=T, col="red")
+# title(main="Occupancy Eira")
+
+# library(colorspace)
+# myTheme=rasterTheme(region=sequential_hcl(10, power=3.3))
+# p <- levelplot(psioccu_cabra2[[1]], par.settings=BuRdTheme) # can be myTheme
+# p + layer(sp.lines(machalilla.limit, lwd=0.8, col='darkgreen'))
+
+# export.asc(x=canopy_map_t, file="D:\\TEAM\\Data\\VB\\covariatesLayers\\canopy_pred.asc")    
+    
+```
+
+
+
+   
+    ## El tigrillo (_Eira barbara_)
+    ### Matriz de datos colapsada a 15 dias
+    
+    ```{r mat_sp6,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,error=FALSE, message=FALSE, fig.height=4,fig.width=7}
+    f.sp.occu.plot.mat(sp_number = 6)
+    ```
+    
+    ### Selección de Modelos
+    ```{r modeo_sps6,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,error=FALSE, message=FALSE, results='asis'}
+    print(as.character(sp.names[sp_number=6]))
+    f.sp.occu.models(sp_number = 6)
+    ```
+    
+
+
+
+#### analisis _Eira barbara_ p(elev)psi(slope)  sp=6 
+```{r eira ,cache=FALSE,warning=FALSE,eval=TRUE, echo=FALSE,results='asis'}
+    
+
+    sp_number<-6
+    
+    sp15<-f.shrink.matrix.to15(matrix = mat.per.sp[[sp_number]])
+    
+    
+    ########################
+    ### make unmarked object 
+    ########################
+    require(unmarked)
+    sp_UMF <- unmarkedFrameOccu(sp15)
+    
+    # plot(sp_UMF, panels=1)
+    # title(main=as.character(sp.names[sp_number]))
+     
+    # add some  covariates
+    siteCovs(sp_UMF) <- cam.and.covs.scaled
+    
+    #######################
+    ## occu models 
+    #######################
+    
+    #  covariates of detection and occupancy in that order.
+    fm0 <- occu(~ 1 ~ 1, sp_UMF) 
+    fm1 <- occu(~ elev ~ elev, sp_UMF)
+    fm2 <- occu(~ elev ~ slope, sp_UMF)
+    # fm3 <- occu(~ elev ~ dist_rd, sp_UMF)
+    fm4 <- occu(~ elev ~ dist_def, sp_UMF)
+    # fm5 <- occu(~ elev ~ dist_def+in_out, sp_UMF)
+    fm6 <- occu(~ basal_a ~ basal_a, sp_UMF)#, starts = c(0.1,0.1,0.1,0.1))
+    fm7 <- occu(~ basal_a ~ elev, sp_UMF)
+    fm8 <- occu(~ basal_a ~ slope, sp_UMF)
+    # fm9 <- occu(~ basal_a ~ dist_rd, sp_UMF)
+    fm10<- occu(~ basal_a ~ dist_def, sp_UMF)
+    # fm11 <- occu(~ basal_a ~ dist_def+in_out, sp_UMF)
+    fm12 <- occu(~ canopy_c ~ canopy_c, sp_UMF, starts = c(0.1,0.1,0.1,0.1))
+    fm13 <- occu(~ canopy_c ~ elev, sp_UMF)
+    fm14 <- occu(~ canopy_c ~ slope, sp_UMF)
+    # fm15 <- occu(~ canopy_c ~ in_out, sp_UMF)
+    fm16 <- occu(~ canopy_c ~ dist_def, sp_UMF, starts = c(0.1,0.1,0.1,0.1))
+    fm17 <- occu(~ canopy_c ~ dist_def+slope, sp_UMF)#, starts = c(0.1,0.1,0.1,0.1,0.1,0.1))
+
+        models <- fitList(
+      'p(.)psi(.)' = fm0,
+      'p(elev)psi(elev)' = fm1,
+      'p(elev)psi(slope)' = fm2,
+      # 'p(elev)psi(dist_rd)' = fm3,
+      'p(elev)psi(dist_def)' = fm4,
+      # 'p(elev)psi(dist_def+dist_rd)' = fm5,
+      'p(basal_a)psi(basal_a)' = fm6,
+      'p(basal_a)psi(elev)' = fm7,
+      'p(basal_a)psi(slope)' = fm8,
+      # 'p(basal_a)psi(dist_rd)' = fm9,
+      'p(basal_a)psi(dist_def)' = fm10,
+      # 'p(basal_a)psi(dist_def+in_out)' = fm11,
+      'p(canopy_c)psi(canopy_c)' = fm12,
+      'p(canopy_c)psi(elev)' = fm13,
+      'p(canopy_c)psi(slope)' = fm14,
+      # 'p(canopy_c)psi(in_out)' = fm15,
+      'p(canopy_c)psi(dist_def)' = fm16,
+      'p(canopy_c)psi(dist_def+slope)' = fm17
+      )
+   
+ modSel(models)  
+    
+    
+  #colnames(newCovs)<- c("site.canopy.s", "date", "time")
+  E.p <- predict(fm2, type="det", newdata=newdata.out, appendData=TRUE)# type puede ser:det psi, col, ext
+  # head(E.p)
+  
+  
+  # Plot it############## detectability
+  plot(Predicted ~ elev, E.p, type="l", ylim=c(-0.1,1),
+       xlab="Canopy cover (standardized)",
+       ylab="Expected detectability")# Expected det
+  lines(lower ~ elev, E.p, type="l", col=gray(0.5))
+  lines(upper ~ elev, E.p, type="l", col=gray(0.5))
+ 
+############## detectability
+     
+  # Plot it again, but this time convert the x-axis back to original scale
+  plot(Predicted ~ elev, E.p, type="l", ylim=c(0,1), col="blue",
+       xlab="elevation (m)",
+       ylab="Detectability",
+       xaxt="n")
+  xticks <- -1:2 #  see wich number equals to var name using: colnames(cam.and.covs)
+  xlabs <- xticks*sd(cam.and.covs[,8]) + mean(cam.and.covs[,8]) #Use the mean and sd of original value to change label name
+  axis(1, at=xticks, labels=round(xlabs, 1))
+  lines(lower ~ elev, E.p, type="l", col=gray(0.5))
+  lines(upper ~ elev, E.p, type="l", col=gray(0.5))
+  
+############## occupancy 
+  E.p2 <- predict(fm2, type="state", newdata=newdata.out, appendData=TRUE)# type puede ser:det state
+  # head(E.p)
+  
+  # Plot it standarzed
+  plot(Predicted ~ slope, E.p2, type="l", ylim=c(0,1),
+       xlab="Slope (standardized)",
+       ylab="Expected Occupancy")# Expected det
+  lines(lower ~ slope, E.p2, type="l", col=gray(0.5))
+  lines(upper ~ slope, E.p2, type="l", col=gray(0.5))
+  
+  # Plot it again, but this time convert the x-axis back to original scale # see names(cam.and.covs)
+  plot(Predicted ~ slope, E.p2, type="l", ylim=c(0,1), col="blue",
+       xlab="Slope",
+       ylab="Occupancy",
+       xaxt="n")
+  xticks <- -1:2
+  xlabs <- xticks*sd(cam.and.covs[,9]) + mean(cam.and.covs[,9]) #Use the mean and sd of original value to change label name
+  axis(1, at=xticks, labels=round(xlabs, 1))
+  lines(lower ~ slope, E.p2, type="l", col=gray(0.5))
+  lines(upper ~ slope, E.p2, type="l", col=gray(0.5))
+  
+  
+############################ 
+########## map
+############################ 
+  
+# dist_def_map.sd<- cellStats(dist.def_paco, 'sd') 
+# dist_def_map.mean<- cellStats(dist.def_paco, 'mean')
+# g.dist_def_map<-(dist.def_paco - dist_def_map.mean)/dist_def_map.sd #map Scaled by sd
+# s <- raster(nrow=600, ncol=400) # remustrea a mas chico
+# s <- resample(g.dist_def_map, s, method='bilinear')
+# dist_def.stack<-stack(g.dist_def_map)
+# names(dist_def.stack)<-"dist_def"
+# # psioccu_cuniculus <- predict(fm16, type="state", newdata=dist_def.stack)# type puede # take a while patience it is a large file!!! 10 x 10 m = 70 Megas
+
+library(spatial.tools)
+#######################################
+### Occupancy map
+#######################################  
+
+
+
+
+# Start a cluster for parallel processing. You must install the "snow" package 
+# for this to work. Comment out this line, and the endCluster() line at the end 
+# of this script, if you do NOT want gfcanalysis to run in parallel.
+if (require(snow)) beginCluster()    
+###### Predict
+psioccu_eira <- predict(fm2, type="state", newdata=cov.stack.standarized)# type puede # take a while patience it is a large file!!! 10 x 10 km = 70 Megas
+# psioccu_dasypus <- predict_rasterEngine(fm16, type="state",newdata=dist_def.stack)
+
+# Stop the parallel processing cluster
+if (require(snow)) endCluster()
+
+
+
+# plot(psioccu_cuniculs) # take a while patience it is a large file!!! 10 x 10 km = 70 Megas
+
+plot(psioccu_eira[[1]])
+library(rasterVis)
+levelplot(psioccu_eira[[1]], par.settings=RdBuTheme) #occupancy
+
+# plot(cam.cords, add=T, col="red")
+# title(main="Occupancy Eira")
+
+# library(colorspace)
+# myTheme=rasterTheme(region=sequential_hcl(10, power=3.3))
+# p <- levelplot(psioccu_cabra2[[1]], par.settings=BuRdTheme) # can be myTheme
+# p + layer(sp.lines(machalilla.limit, lwd=0.8, col='darkgreen'))
+
+# export.asc(x=canopy_map_t, file="D:\\TEAM\\Data\\VB\\covariatesLayers\\canopy_pred.asc")    
+    
+```
+
+
+
+
+## La vaca (_Odocoileus virginianus_)
+### Matriz de datos colapsada a 15 dias
+    
+    ```{r mat_sp18,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,error=FALSE, message=FALSE, fig.height=4,fig.width=7}
+    f.sp.occu.plot.mat(sp_number = 18)
+    ```
+    
+### Selección de Modelos
+    ```{r modeo_sps18,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,error=FALSE, message=FALSE, results='asis'}
+    print(as.character(sp.names[sp_number=18]))
+    f.sp.occu.models(sp_number = 18)
+    ```
+
+
+
+#### analisis _Odocoileus virginianus_ p(.)psi(.)   sp=18 
+```{r odocoileus ,cache=FALSE,warning=FALSE,eval=TRUE, echo=FALSE,results='asis'}
+    
+
+    sp_number<-18
+    
+    sp15<-f.shrink.matrix.to15(matrix = mat.per.sp[[sp_number]])
+    
+    
+    ########################
+    ### make unmarked object 
+    ########################
+    require(unmarked)
+    sp_UMF <- unmarkedFrameOccu(sp15)
+    
+    # plot(sp_UMF, panels=1)
+    # title(main=as.character(sp.names[sp_number]))
+     
+    # add some  covariates
+    siteCovs(sp_UMF) <- cam.and.covs.scaled
+    
+    #######################
+    ## occu models 
+    #######################
+    
+    #  covariates of detection and occupancy in that order.
+    fm0 <- occu(~ 1 ~ 1, sp_UMF) 
+    fm1 <- occu(~ elev ~ elev, sp_UMF)
+    fm2 <- occu(~ elev ~ slope, sp_UMF)
+    # fm3 <- occu(~ elev ~ dist_rd, sp_UMF)
+    fm4 <- occu(~ elev ~ dist_def, sp_UMF)
+    # fm5 <- occu(~ elev ~ dist_def+in_out, sp_UMF)
+    fm6 <- occu(~ basal_a ~ basal_a, sp_UMF)#, starts = c(0.1,0.1,0.1,0.1))
+    fm7 <- occu(~ basal_a ~ elev, sp_UMF)
+    fm8 <- occu(~ basal_a ~ slope, sp_UMF)
+    # fm9 <- occu(~ basal_a ~ dist_rd, sp_UMF)
+    fm10<- occu(~ basal_a ~ dist_def, sp_UMF)
+    # fm11 <- occu(~ basal_a ~ dist_def+in_out, sp_UMF)
+    fm12 <- occu(~ canopy_c ~ canopy_c, sp_UMF, starts = c(0.1,0.1,0.1,0.1))
+    fm13 <- occu(~ canopy_c ~ elev, sp_UMF)
+    fm14 <- occu(~ canopy_c ~ slope, sp_UMF)
+    # fm15 <- occu(~ canopy_c ~ in_out, sp_UMF)
+    fm16 <- occu(~ canopy_c ~ dist_def, sp_UMF, starts = c(0.1,0.1,0.1,0.1))
+    fm17 <- occu(~ canopy_c ~ dist_def+slope, sp_UMF)#, starts = c(0.1,0.1,0.1,0.1,0.1,0.1))
+
+        models <- fitList(
+      'p(.)psi(.)' = fm0,
+      'p(elev)psi(elev)' = fm1,
+      'p(elev)psi(slope)' = fm2,
+      # 'p(elev)psi(dist_rd)' = fm3,
+      'p(elev)psi(dist_def)' = fm4,
+      # 'p(elev)psi(dist_def+dist_rd)' = fm5,
+      'p(basal_a)psi(basal_a)' = fm6,
+      'p(basal_a)psi(elev)' = fm7,
+      'p(basal_a)psi(slope)' = fm8,
+      # 'p(basal_a)psi(dist_rd)' = fm9,
+      'p(basal_a)psi(dist_def)' = fm10,
+      # 'p(basal_a)psi(dist_def+in_out)' = fm11,
+      'p(canopy_c)psi(canopy_c)' = fm12,
+      'p(canopy_c)psi(elev)' = fm13,
+      'p(canopy_c)psi(slope)' = fm14,
+      # 'p(canopy_c)psi(in_out)' = fm15,
+      'p(canopy_c)psi(dist_def)' = fm16,
+      'p(canopy_c)psi(dist_def+slope)' = fm17
+      )
+   
+ modSel(models)  
+    
+    
+  #colnames(newCovs)<- c("site.canopy.s", "date", "time")
+  E.p <- predict(fm2, type="det", newdata=newdata.out, appendData=TRUE)# type puede ser:det psi, col, ext
+  # head(E.p)
+  
+  
+  # Plot it############## detectability
+  plot(Predicted ~ elev, E.p, type="l", ylim=c(-0.1,1),
+       xlab="Canopy cover (standardized)",
+       ylab="Expected detectability")# Expected det
+  lines(lower ~ elev, E.p, type="l", col=gray(0.5))
+  lines(upper ~ elev, E.p, type="l", col=gray(0.5))
+ 
+############## detectability
+     
+  # Plot it again, but this time convert the x-axis back to original scale
+  plot(Predicted ~ elev, E.p, type="l", ylim=c(0,1), col="blue",
+       xlab="elevation (m)",
+       ylab="Detectability",
+       xaxt="n")
+  xticks <- -1:2 #  see wich number equals to var name using: colnames(cam.and.covs)
+  xlabs <- xticks*sd(cam.and.covs[,8]) + mean(cam.and.covs[,8]) #Use the mean and sd of original value to change label name
+  axis(1, at=xticks, labels=round(xlabs, 1))
+  lines(lower ~ elev, E.p, type="l", col=gray(0.5))
+  lines(upper ~ elev, E.p, type="l", col=gray(0.5))
+  
+############## occupancy 
+  E.p2 <- predict(fm2, type="state", newdata=newdata.out, appendData=TRUE)# type puede ser:det state
+  # head(E.p)
+  
+  # Plot it standarzed
+  plot(Predicted ~ slope, E.p2, type="l", ylim=c(0,1),
+       xlab="Slope (standardized)",
+       ylab="Expected Occupancy")# Expected det
+  lines(lower ~ slope, E.p2, type="l", col=gray(0.5))
+  lines(upper ~ slope, E.p2, type="l", col=gray(0.5))
+  
+  # Plot it again, but this time convert the x-axis back to original scale # see names(cam.and.covs)
+  plot(Predicted ~ slope, E.p2, type="l", ylim=c(0,1), col="blue",
+       xlab="Slope",
+       ylab="Occupancy",
+       xaxt="n")
+  xticks <- -1:2
+  xlabs <- xticks*sd(cam.and.covs[,9]) + mean(cam.and.covs[,9]) #Use the mean and sd of original value to change label name
+  axis(1, at=xticks, labels=round(xlabs, 1))
+  lines(lower ~ slope, E.p2, type="l", col=gray(0.5))
+  lines(upper ~ slope, E.p2, type="l", col=gray(0.5))
+  
+  
+############################ 
+########## map
+############################ 
+  
+# dist_def_map.sd<- cellStats(dist.def_paco, 'sd') 
+# dist_def_map.mean<- cellStats(dist.def_paco, 'mean')
+# g.dist_def_map<-(dist.def_paco - dist_def_map.mean)/dist_def_map.sd #map Scaled by sd
+# s <- raster(nrow=600, ncol=400) # remustrea a mas chico
+# s <- resample(g.dist_def_map, s, method='bilinear')
+# dist_def.stack<-stack(g.dist_def_map)
+# names(dist_def.stack)<-"dist_def"
+# # psioccu_cuniculus <- predict(fm16, type="state", newdata=dist_def.stack)# type puede # take a while patience it is a large file!!! 10 x 10 m = 70 Megas
+
+library(spatial.tools)
+#######################################
+### Occupancy map
+#######################################  
+
+
+
+
+# Start a cluster for parallel processing. You must install the "snow" package 
+# for this to work. Comment out this line, and the endCluster() line at the end 
+# of this script, if you do NOT want gfcanalysis to run in parallel.
+if (require(snow)) beginCluster()    
+###### Predict
+psioccu_eira <- predict(fm2, type="state", newdata=cov.stack.standarized)# type puede # take a while patience it is a large file!!! 10 x 10 km = 70 Megas
+# psioccu_dasypus <- predict_rasterEngine(fm16, type="state",newdata=dist_def.stack)
+
+# Stop the parallel processing cluster
+if (require(snow)) endCluster()
+
+
+
+# plot(psioccu_cuniculs) # take a while patience it is a large file!!! 10 x 10 km = 70 Megas
+
+plot(psioccu_eira[[1]])
+library(rasterVis)
+levelplot(psioccu_eira[[1]], par.settings=RdBuTheme) #occupancy
+
+# plot(cam.cords, add=T, col="red")
+# title(main="Occupancy Eira")
+
+# library(colorspace)
+# myTheme=rasterTheme(region=sequential_hcl(10, power=3.3))
+# p <- levelplot(psioccu_cabra2[[1]], par.settings=BuRdTheme) # can be myTheme
+# p + layer(sp.lines(machalilla.limit, lwd=0.8, col='darkgreen'))
+
+# export.asc(x=canopy_map_t, file="D:\\TEAM\\Data\\VB\\covariatesLayers\\canopy_pred.asc")    
+    
+```
+
+  
+    
+    
+    
+    
+    
+## El oso hormigero (_Tamandua mexicana_)
+### Matriz de datos colapsada a 15 dias
+    
+    ```{r mat_sp11,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,error=FALSE, message=FALSE, fig.height=4,fig.width=7}
+    f.sp.occu.plot.mat(sp_number = 11)
+    ```
+    
+### Selección de Modelos _Tamandua mexicana_
+    ```{r modeo_sps11,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,error=FALSE, message=FALSE, results='asis'}
+    print(as.character(sp.names[sp_number=11]))
+    f.sp.occu.models(sp_number = 11)
+    ```
+    
+    
+
+#### analisis _Tamandua mexicana_ p(.)psi(.)   sp=11 
+```{r tamandua ,cache=FALSE,warning=FALSE,eval=TRUE, echo=FALSE,results='asis'}
+    
+
+    sp_number<-11
+    
+    sp15<-f.shrink.matrix.to15(matrix = mat.per.sp[[sp_number]])
+    
+    
+    ########################
+    ### make unmarked object 
+    ########################
+    require(unmarked)
+    sp_UMF <- unmarkedFrameOccu(sp15)
+    
+    # plot(sp_UMF, panels=1)
+    # title(main=as.character(sp.names[sp_number]))
+     
+    # add some  covariates
+    siteCovs(sp_UMF) <- cam.and.covs.scaled
+    
+    #######################
+    ## occu models 
+    #######################
+    
+    #  covariates of detection and occupancy in that order.
+    fm0 <- occu(~ 1 ~ 1, sp_UMF) 
+    fm1 <- occu(~ elev ~ elev, sp_UMF)
+    fm2 <- occu(~ elev ~ slope, sp_UMF)
+    # fm3 <- occu(~ elev ~ dist_rd, sp_UMF)
+    fm4 <- occu(~ elev ~ dist_def, sp_UMF)
+    # fm5 <- occu(~ elev ~ dist_def+in_out, sp_UMF)
+    fm6 <- occu(~ basal_a ~ basal_a, sp_UMF)#, starts = c(0.1,0.1,0.1,0.1))
+    fm7 <- occu(~ basal_a ~ elev, sp_UMF)
+    fm8 <- occu(~ basal_a ~ slope, sp_UMF)
+    # fm9 <- occu(~ basal_a ~ dist_rd, sp_UMF)
+    fm10<- occu(~ basal_a ~ dist_def, sp_UMF)
+    # fm11 <- occu(~ basal_a ~ dist_def+in_out, sp_UMF)
+    fm12 <- occu(~ canopy_c ~ canopy_c, sp_UMF, starts = c(0.1,0.1,0.1,0.1))
+    fm13 <- occu(~ canopy_c ~ elev, sp_UMF)
+    fm14 <- occu(~ canopy_c ~ slope, sp_UMF)
+    # fm15 <- occu(~ canopy_c ~ in_out, sp_UMF)
+    fm16 <- occu(~ canopy_c ~ dist_def, sp_UMF, starts = c(0.1,0.1,0.1,0.1))
+    fm17 <- occu(~ canopy_c ~ dist_def+slope, sp_UMF)#, starts = c(0.1,0.1,0.1,0.1,0.1,0.1))
+
+        models <- fitList(
+      'p(.)psi(.)' = fm0,
+      'p(elev)psi(elev)' = fm1,
+      'p(elev)psi(slope)' = fm2,
+      # 'p(elev)psi(dist_rd)' = fm3,
+      'p(elev)psi(dist_def)' = fm4,
+      # 'p(elev)psi(dist_def+dist_rd)' = fm5,
+      'p(basal_a)psi(basal_a)' = fm6,
+      'p(basal_a)psi(elev)' = fm7,
+      'p(basal_a)psi(slope)' = fm8,
+      # 'p(basal_a)psi(dist_rd)' = fm9,
+      'p(basal_a)psi(dist_def)' = fm10,
+      # 'p(basal_a)psi(dist_def+in_out)' = fm11,
+      'p(canopy_c)psi(canopy_c)' = fm12,
+      'p(canopy_c)psi(elev)' = fm13,
+      'p(canopy_c)psi(slope)' = fm14,
+      # 'p(canopy_c)psi(in_out)' = fm15,
+      'p(canopy_c)psi(dist_def)' = fm16,
+      'p(canopy_c)psi(dist_def+slope)' = fm17
+      )
+   
+ modSel(models)  
+    
+    
+  #colnames(newCovs)<- c("site.canopy.s", "date", "time")
+  E.p <- predict(fm2, type="det", newdata=newdata.out, appendData=TRUE)# type puede ser:det psi, col, ext
+  # head(E.p)
+  
+  
+  # Plot it############## detectability
+  plot(Predicted ~ elev, E.p, type="l", ylim=c(-0.1,1),
+       xlab="Canopy cover (standardized)",
+       ylab="Expected detectability")# Expected det
+  lines(lower ~ elev, E.p, type="l", col=gray(0.5))
+  lines(upper ~ elev, E.p, type="l", col=gray(0.5))
+ 
+############## detectability
+     
+  # Plot it again, but this time convert the x-axis back to original scale
+  plot(Predicted ~ elev, E.p, type="l", ylim=c(0,1), col="blue",
+       xlab="elevation (m)",
+       ylab="Detectability",
+       xaxt="n")
+  xticks <- -1:2 #  see wich number equals to var name using: colnames(cam.and.covs)
+  xlabs <- xticks*sd(cam.and.covs[,8]) + mean(cam.and.covs[,8]) #Use the mean and sd of original value to change label name
+  axis(1, at=xticks, labels=round(xlabs, 1))
+  lines(lower ~ elev, E.p, type="l", col=gray(0.5))
+  lines(upper ~ elev, E.p, type="l", col=gray(0.5))
+  
+############## occupancy 
+  E.p2 <- predict(fm2, type="state", newdata=newdata.out, appendData=TRUE)# type puede ser:det state
+  # head(E.p)
+  
+  # Plot it standarzed
+  plot(Predicted ~ slope, E.p2, type="l", ylim=c(0,1),
+       xlab="Slope (standardized)",
+       ylab="Expected Occupancy")# Expected det
+  lines(lower ~ slope, E.p2, type="l", col=gray(0.5))
+  lines(upper ~ slope, E.p2, type="l", col=gray(0.5))
+  
+  # Plot it again, but this time convert the x-axis back to original scale # see names(cam.and.covs)
+  plot(Predicted ~ slope, E.p2, type="l", ylim=c(0,1), col="blue",
+       xlab="Slope",
+       ylab="Occupancy",
+       xaxt="n")
+  xticks <- -1:2
+  xlabs <- xticks*sd(cam.and.covs[,9]) + mean(cam.and.covs[,9]) #Use the mean and sd of original value to change label name
+  axis(1, at=xticks, labels=round(xlabs, 1))
+  lines(lower ~ slope, E.p2, type="l", col=gray(0.5))
+  lines(upper ~ slope, E.p2, type="l", col=gray(0.5))
+  
+  
+############################ 
+########## map
+############################ 
+  
+# dist_def_map.sd<- cellStats(dist.def_paco, 'sd') 
+# dist_def_map.mean<- cellStats(dist.def_paco, 'mean')
+# g.dist_def_map<-(dist.def_paco - dist_def_map.mean)/dist_def_map.sd #map Scaled by sd
+# s <- raster(nrow=600, ncol=400) # remustrea a mas chico
+# s <- resample(g.dist_def_map, s, method='bilinear')
+# dist_def.stack<-stack(g.dist_def_map)
+# names(dist_def.stack)<-"dist_def"
+# # psioccu_cuniculus <- predict(fm16, type="state", newdata=dist_def.stack)# type puede # take a while patience it is a large file!!! 10 x 10 m = 70 Megas
+
+library(spatial.tools)
+#######################################
+### Occupancy map
+#######################################  
+
+
+
+
+# Start a cluster for parallel processing. You must install the "snow" package 
+# # for this to work. Comment out this line, and the endCluster() line at the end 
+# # of this script, if you do NOT want gfcanalysis to run in parallel.
+# if (require(snow)) beginCluster()    
+# ###### Predict
+# psioccu_eira <- predict(fm2, type="state", newdata=cov.stack.standarized)# type puede # take a while patience it is a large file!!! 10 x 10 km = 70 Megas
+# # psioccu_dasypus <- predict_rasterEngine(fm16, type="state",newdata=dist_def.stack)
+# 
+# # Stop the parallel processing cluster
+# if (require(snow)) endCluster()
+# 
+# 
+# 
+# # plot(psioccu_cuniculs) # take a while patience it is a large file!!! 10 x 10 km = 70 Megas
+# 
+# plot(psioccu_eira[[1]])
+# library(rasterVis)
+# levelplot(psioccu_eira[[1]], par.settings=RdBuTheme) #occupancy
+# 
+# plot(cam.cords, add=T, col="red")
+# title(main="Occupancy Eira")
+
+# library(colorspace)
+# myTheme=rasterTheme(region=sequential_hcl(10, power=3.3))
+# p <- levelplot(psioccu_cabra2[[1]], par.settings=BuRdTheme) # can be myTheme
+# p + layer(sp.lines(machalilla.limit, lwd=0.8, col='darkgreen'))
+
+# export.asc(x=canopy_map_t, file="D:\\TEAM\\Data\\VB\\covariatesLayers\\canopy_pred.asc")    
+    
+```
+
+  
+      
+  
+     
+    
+## El conejo (_Sylvilagus brasiliensis_)
+### Matriz de datos colapsada a 15 dias
+    
+    ```{r mat_sp22,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,error=FALSE, message=FALSE, fig.height=4,fig.width=7}
+    f.sp.occu.plot.mat(sp_number = 22)
+    ```
+    
+### Selección de Modelos _Sylvilagus brasiliensis_
+    ```{r modeo_sps22,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,error=FALSE, message=FALSE, results='asis'}
+    print(as.character(sp.names[sp_number=22]))
+    f.sp.occu.models(sp_number = 22)
+    ```
+    
+    
+
+#### analisis _Sylvilagus brasiliensis_ p(.)psi(.)   sp=22 
+```{r sylvilagus ,cache=FALSE,warning=FALSE,eval=TRUE, echo=FALSE,results='asis'}
+    
+
+    sp_number<-22
+    
+    sp15<-f.shrink.matrix.to15(matrix = mat.per.sp[[sp_number]])
+    
+    
+    ########################
+    ### make unmarked object 
+    ########################
+    require(unmarked)
+    sp_UMF <- unmarkedFrameOccu(sp15)
+    
+    # plot(sp_UMF, panels=1)
+    # title(main=as.character(sp.names[sp_number]))
+     
+    # add some  covariates
+    siteCovs(sp_UMF) <- cam.and.covs.scaled
+    
+    #######################
+    ## occu models 
+    #######################
+    
+    #  covariates of detection and occupancy in that order.
+    fm0 <- occu(~ 1 ~ 1, sp_UMF) 
+    fm1 <- occu(~ elev ~ elev, sp_UMF)
+    fm2 <- occu(~ elev ~ slope, sp_UMF)
+    # fm3 <- occu(~ elev ~ dist_rd, sp_UMF)
+    fm4 <- occu(~ elev ~ dist_def, sp_UMF)
+    # fm5 <- occu(~ elev ~ dist_def+in_out, sp_UMF)
+    fm6 <- occu(~ basal_a ~ basal_a, sp_UMF)#, starts = c(0.1,0.1,0.1,0.1))
+    fm7 <- occu(~ basal_a ~ elev, sp_UMF)
+    fm8 <- occu(~ basal_a ~ slope, sp_UMF)
+    # fm9 <- occu(~ basal_a ~ dist_rd, sp_UMF)
+    fm10<- occu(~ basal_a ~ dist_def, sp_UMF)
+    # fm11 <- occu(~ basal_a ~ dist_def+in_out, sp_UMF)
+    fm12 <- occu(~ canopy_c ~ canopy_c, sp_UMF, starts = c(0.1,0.1,0.1,0.1))
+    fm13 <- occu(~ canopy_c ~ elev, sp_UMF)
+    fm14 <- occu(~ canopy_c ~ slope, sp_UMF)
+    # fm15 <- occu(~ canopy_c ~ in_out, sp_UMF)
+    fm16 <- occu(~ canopy_c ~ dist_def, sp_UMF, starts = c(0.1,0.1,0.1,0.1))
+    fm17 <- occu(~ canopy_c ~ dist_def+slope, sp_UMF)#, starts = c(0.1,0.1,0.1,0.1,0.1,0.1))
+
+        models <- fitList(
+      'p(.)psi(.)' = fm0,
+      'p(elev)psi(elev)' = fm1,
+      'p(elev)psi(slope)' = fm2,
+      # 'p(elev)psi(dist_rd)' = fm3,
+      'p(elev)psi(dist_def)' = fm4,
+      # 'p(elev)psi(dist_def+dist_rd)' = fm5,
+      'p(basal_a)psi(basal_a)' = fm6,
+      'p(basal_a)psi(elev)' = fm7,
+      'p(basal_a)psi(slope)' = fm8,
+      # 'p(basal_a)psi(dist_rd)' = fm9,
+      'p(basal_a)psi(dist_def)' = fm10,
+      # 'p(basal_a)psi(dist_def+in_out)' = fm11,
+      'p(canopy_c)psi(canopy_c)' = fm12,
+      'p(canopy_c)psi(elev)' = fm13,
+      'p(canopy_c)psi(slope)' = fm14,
+      # 'p(canopy_c)psi(in_out)' = fm15,
+      'p(canopy_c)psi(dist_def)' = fm16,
+      'p(canopy_c)psi(dist_def+slope)' = fm17
+      )
+   
+ modSel(models)  
+    
+    
+  #colnames(newCovs)<- c("site.canopy.s", "date", "time")
+  E.p <- predict(fm2, type="det", newdata=newdata.out, appendData=TRUE)# type puede ser:det psi, col, ext
+  # head(E.p)
+  
+  
+  # Plot it############## detectability
+  plot(Predicted ~ elev, E.p, type="l", ylim=c(-0.1,1),
+       xlab="Canopy cover (standardized)",
+       ylab="Expected detectability")# Expected det
+  lines(lower ~ elev, E.p, type="l", col=gray(0.5))
+  lines(upper ~ elev, E.p, type="l", col=gray(0.5))
+ 
+############## detectability
+     
+  # Plot it again, but this time convert the x-axis back to original scale
+  plot(Predicted ~ elev, E.p, type="l", ylim=c(0,1), col="blue",
+       xlab="elevation (m)",
+       ylab="Detectability",
+       xaxt="n")
+  xticks <- -1:2 #  see wich number equals to var name using: colnames(cam.and.covs)
+  xlabs <- xticks*sd(cam.and.covs[,8]) + mean(cam.and.covs[,8]) #Use the mean and sd of original value to change label name
+  axis(1, at=xticks, labels=round(xlabs, 1))
+  lines(lower ~ elev, E.p, type="l", col=gray(0.5))
+  lines(upper ~ elev, E.p, type="l", col=gray(0.5))
+  
+############## occupancy 
+  E.p2 <- predict(fm2, type="state", newdata=newdata.out, appendData=TRUE)# type puede ser:det state
+  # head(E.p)
+  
+  # Plot it standarzed
+  plot(Predicted ~ slope, E.p2, type="l", ylim=c(0,1),
+       xlab="Slope (standardized)",
+       ylab="Expected Occupancy")# Expected det
+  lines(lower ~ slope, E.p2, type="l", col=gray(0.5))
+  lines(upper ~ slope, E.p2, type="l", col=gray(0.5))
+  
+  # Plot it again, but this time convert the x-axis back to original scale # see names(cam.and.covs)
+  plot(Predicted ~ slope, E.p2, type="l", ylim=c(0,1), col="blue",
+       xlab="Slope",
+       ylab="Occupancy",
+       xaxt="n")
+  xticks <- -1:2
+  xlabs <- xticks*sd(cam.and.covs[,9]) + mean(cam.and.covs[,9]) #Use the mean and sd of original value to change label name
+  axis(1, at=xticks, labels=round(xlabs, 1))
+  lines(lower ~ slope, E.p2, type="l", col=gray(0.5))
+  lines(upper ~ slope, E.p2, type="l", col=gray(0.5))
+  
+  
+############################ 
+########## map
+############################ 
+  
+# dist_def_map.sd<- cellStats(dist.def_paco, 'sd') 
+# dist_def_map.mean<- cellStats(dist.def_paco, 'mean')
+# g.dist_def_map<-(dist.def_paco - dist_def_map.mean)/dist_def_map.sd #map Scaled by sd
+# s <- raster(nrow=600, ncol=400) # remustrea a mas chico
+# s <- resample(g.dist_def_map, s, method='bilinear')
+# dist_def.stack<-stack(g.dist_def_map)
+# names(dist_def.stack)<-"dist_def"
+# # psioccu_cuniculus <- predict(fm16, type="state", newdata=dist_def.stack)# type puede # take a while patience it is a large file!!! 10 x 10 m = 70 Megas
+
+library(spatial.tools)
+#######################################
+### Occupancy map
+#######################################  
+
+
+
+
+# Start a cluster for parallel processing. You must install the "snow" package 
+# # for this to work. Comment out this line, and the endCluster() line at the end 
+# # of this script, if you do NOT want gfcanalysis to run in parallel.
+# if (require(snow)) beginCluster()    
+# ###### Predict
+# psioccu_eira <- predict(fm2, type="state", newdata=cov.stack.standarized)# type puede # take a while patience it is a large file!!! 10 x 10 km = 70 Megas
+# # psioccu_dasypus <- predict_rasterEngine(fm16, type="state",newdata=dist_def.stack)
+# 
+# # Stop the parallel processing cluster
+# if (require(snow)) endCluster()
+# 
+# 
+# 
+# # plot(psioccu_cuniculs) # take a while patience it is a large file!!! 10 x 10 km = 70 Megas
+# 
+# plot(psioccu_eira[[1]])
+# library(rasterVis)
+# levelplot(psioccu_eira[[1]], par.settings=RdBuTheme) #occupancy
+# 
+# plot(cam.cords, add=T, col="red")
+# title(main="Occupancy Eira")
+
+# library(colorspace)
+# myTheme=rasterTheme(region=sequential_hcl(10, power=3.3))
+# p <- levelplot(psioccu_cabra2[[1]], par.settings=BuRdTheme) # can be myTheme
+# p + layer(sp.lines(machalilla.limit, lwd=0.8, col='darkgreen'))
+
+# export.asc(x=canopy_map_t, file="D:\\TEAM\\Data\\VB\\covariatesLayers\\canopy_pred.asc")    
+    
+```
+
+  
+
+     
+    
+## El margay (_Leopardus wiedii_)
+### Matriz de datos colapsada a 15 dias
+    
+    ```{r mat_sp10,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,error=FALSE, message=FALSE, fig.height=4,fig.width=7}
+    f.sp.occu.plot.mat(sp_number = 10)
+    ```
+    
+### Selección de Modelos _Leopardus wiedii_
+    ```{r modeo_sps10,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,error=FALSE, message=FALSE, results='asis'}
+    print(as.character(sp.names[sp_number=10]))
+    f.sp.occu.models(sp_number = 10)
+    ```
+    
+    
+
+#### analisis _Procyon cancrivorus_ p(canopy_c)psi(dist_def+slope)   sp=10 
+```{r margay ,cache=FALSE,warning=FALSE,eval=TRUE, echo=FALSE,results='asis'}
+    
+
+    sp_number<-10
+    
+    sp15<-f.shrink.matrix.to15(matrix = mat.per.sp[[sp_number]])
+    
+    
+    ########################
+    ### make unmarked object 
+    ########################
+    require(unmarked)
+    sp_UMF <- unmarkedFrameOccu(sp15)
+    
+    # plot(sp_UMF, panels=1)
+    # title(main=as.character(sp.names[sp_number]))
+     
+    # add some  covariates
+    siteCovs(sp_UMF) <- cam.and.covs.scaled
+    
+    #######################
+    ## occu models 
+    #######################
+    
+    #  covariates of detection and occupancy in that order.
+    fm0 <- occu(~ 1 ~ 1, sp_UMF) 
+    fm1 <- occu(~ elev ~ elev, sp_UMF)
+    fm2 <- occu(~ elev ~ slope, sp_UMF)
+    # fm3 <- occu(~ elev ~ dist_rd, sp_UMF)
+    fm4 <- occu(~ elev ~ dist_def, sp_UMF)
+    # fm5 <- occu(~ elev ~ dist_def+in_out, sp_UMF)
+    fm6 <- occu(~ basal_a ~ basal_a, sp_UMF)#, starts = c(0.1,0.1,0.1,0.1))
+    fm7 <- occu(~ basal_a ~ elev, sp_UMF)
+    fm8 <- occu(~ basal_a ~ slope, sp_UMF)
+    # fm9 <- occu(~ basal_a ~ dist_rd, sp_UMF)
+    fm10<- occu(~ basal_a ~ dist_def, sp_UMF)
+    # fm11 <- occu(~ basal_a ~ dist_def+in_out, sp_UMF)
+    fm12 <- occu(~ canopy_c ~ canopy_c, sp_UMF, starts = c(0.1,0.1,0.1,0.1))
+    fm13 <- occu(~ canopy_c ~ elev, sp_UMF)
+    fm14 <- occu(~ canopy_c ~ slope, sp_UMF)
+    # fm15 <- occu(~ canopy_c ~ in_out, sp_UMF)
+    fm16 <- occu(~ canopy_c ~ dist_def, sp_UMF, starts = c(0.1,0.1,0.1,0.1))
+    fm17 <- occu(~ canopy_c ~ dist_def+slope, sp_UMF)#, starts = c(0.1,0.1,0.1,0.1,0.1,0.1))
+
+        models <- fitList(
+      'p(.)psi(.)' = fm0,
+      'p(elev)psi(elev)' = fm1,
+      'p(elev)psi(slope)' = fm2,
+      # 'p(elev)psi(dist_rd)' = fm3,
+      'p(elev)psi(dist_def)' = fm4,
+      # 'p(elev)psi(dist_def+dist_rd)' = fm5,
+      'p(basal_a)psi(basal_a)' = fm6,
+      'p(basal_a)psi(elev)' = fm7,
+      'p(basal_a)psi(slope)' = fm8,
+      # 'p(basal_a)psi(dist_rd)' = fm9,
+      'p(basal_a)psi(dist_def)' = fm10,
+      # 'p(basal_a)psi(dist_def+in_out)' = fm11,
+      'p(canopy_c)psi(canopy_c)' = fm12,
+      'p(canopy_c)psi(elev)' = fm13,
+      'p(canopy_c)psi(slope)' = fm14,
+      # 'p(canopy_c)psi(in_out)' = fm15,
+      'p(canopy_c)psi(dist_def)' = fm16,
+      'p(canopy_c)psi(dist_def+slope)' = fm17
+      )
+   
+ modSel(models)  
+    
+    
+  #colnames(newCovs)<- c("site.canopy.s", "date", "time")
+  E.p <- predict(fm17, type="det", newdata=newdata.out, appendData=TRUE)# type puede ser:det psi, col, ext
+  # head(E.p)
+  
+  
+  # Plot it############## detectability
+  plot(Predicted ~ canopy_c, E.p, type="l", ylim=c(-0.1,1),
+       xlab="Canopy cover (standardized)",
+       ylab="Expected detectability")# Expected det
+  lines(lower ~ canopy_c, E.p, type="l", col=gray(0.5))
+  lines(upper ~ canopy_c, E.p, type="l", col=gray(0.5))
+ 
+############## detectability
+     
+  # Plot it again, but this time convert the x-axis back to original scale
+  plot(Predicted ~ canopy_c, E.p, type="l", ylim=c(0,1), col="blue",
+       xlab="Canopy cover (%)",
+       ylab="Detectability",
+       xaxt="n")
+  xticks <- -1:2 #  see wich number equals to var name using: colnames(cam.and.covs)
+  xlabs <- xticks*sd(cam.and.covs[,3]) + mean(cam.and.covs[,3]) #Use the mean and sd of original value to change label name
+  axis(1, at=xticks, labels=round(xlabs, 1))
+  lines(lower ~ canopy_c, E.p, type="l", col=gray(0.5))
+  lines(upper ~ canopy_c, E.p, type="l", col=gray(0.5))
+  
+############## occupancy 
+  E.p2 <- predict(fm17, type="state", newdata=newdata.out, appendData=TRUE)# type puede ser:det state
+  # head(E.p)
+  
+  # Plot it standarzed
+  plot(Predicted ~ dist_def +slope, E.p2, type="l", ylim=c(0,1),
+       xlab="Slope (standardized)",
+       ylab="Expected Occupancy")# Expected det
+  lines(lower ~ dist_def +slope, E.p2, type="l", col=gray(0.5))
+  lines(upper ~ dist_def +slope, E.p2, type="l", col=gray(0.5))
+  
+  # Plot it again, but this time convert the x-axis back to original scale # see names(cam.and.covs)
+  plot(Predicted ~ slope, E.p2, type="l", ylim=c(0,1), col="blue",
+       xlab="Slope",
+       ylab="Occupancy",
+       xaxt="n")
+  xticks <- -1:2
+  xlabs <- xticks*sd(cam.and.covs[,9]) + mean(cam.and.covs[,9]) #Use the mean and sd of original value to change label name
+  axis(1, at=xticks, labels=round(xlabs, 1))
+  lines(lower ~ slope, E.p2, type="l", col=gray(0.5))
+  lines(upper ~ slope, E.p2, type="l", col=gray(0.5))
+  
+  
+############################ 
+########## map
+############################ 
+  
+# dist_def_map.sd<- cellStats(dist.def_paco, 'sd') 
+# dist_def_map.mean<- cellStats(dist.def_paco, 'mean')
+# g.dist_def_map<-(dist.def_paco - dist_def_map.mean)/dist_def_map.sd #map Scaled by sd
+# s <- raster(nrow=600, ncol=400) # remustrea a mas chico
+# s <- resample(g.dist_def_map, s, method='bilinear')
+# dist_def.stack<-stack(g.dist_def_map)
+# names(dist_def.stack)<-"dist_def"
+# # psioccu_cuniculus <- predict(fm16, type="state", newdata=dist_def.stack)# type puede # take a while patience it is a large file!!! 10 x 10 m = 70 Megas
+
+library(spatial.tools)
+#######################################
+### Occupancy map
+#######################################  
+
+
+
+
+# Start a cluster for parallel processing. You must install the "snow" package 
+# # for this to work. Comment out this line, and the endCluster() line at the end 
+# # of this script, if you do NOT want gfcanalysis to run in parallel.
+# if (require(snow)) beginCluster()    
+# ###### Predict
+psioccu_leopardus_wiedii <- predict(fm17, type="state", newdata=cov.stack.standarized)# type puede # take a while patience it is a large file!!! 10 x 10 km = 70 Megas
+# # psioccu_dasypus <- predict_rasterEngine(fm16, type="state",newdata=dist_def.stack)
+# 
+# # Stop the parallel processing cluster
+# if (require(snow)) endCluster()
+# 
+# 
+# 
+# # plot(psioccu_cuniculs) # take a while patience it is a large file!!! 10 x 10 km = 70 Megas
+# 
+# plot(psioccu_eira[[1]])
+library(rasterVis)
+levelplot(psioccu_leopardus_wiedii[[1]], par.settings=RdBuTheme) #occupancy
+# 
+# plot(cam.cords, add=T, col="red")
+# title(main="Occupancy Eira")
+
+# library(colorspace)
+# myTheme=rasterTheme(region=sequential_hcl(10, power=3.3))
+# p <- levelplot(psioccu_cabra2[[1]], par.settings=BuRdTheme) # can be myTheme
+# p + layer(sp.lines(machalilla.limit, lwd=0.8, col='darkgreen'))
+
+# export.asc(x=canopy_map_t, file="D:\\TEAM\\Data\\VB\\covariatesLayers\\canopy_pred.asc")    
+    
+```
+
+  
+      
+     
+    
+## El mapache (_Procyon cancrivorus_)
+### Matriz de datos colapsada a 15 dias
+    
+    ```{r mat_sp12,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,error=FALSE, message=FALSE, fig.height=4,fig.width=7}
+    f.sp.occu.plot.mat(sp_number = 12)
+    ```
+    
+### Selección de Modelos _Procyon cancrivorus_
+    ```{r modeo_sps112,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,error=FALSE, message=FALSE, results='asis'}
+    print(as.character(sp.names[sp_number=12]))
+    f.sp.occu.models(sp_number = 12)
+    ```
+    
+    
+
+#### analisis _Procyon cancrivorus_ p(.)psi(.)   sp=12 
+```{r procyon ,cache=FALSE,warning=FALSE,eval=TRUE, echo=FALSE,results='asis'}
+    
+
+    sp_number<-12
+    
+    sp15<-f.shrink.matrix.to15(matrix = mat.per.sp[[sp_number]])
+    
+    
+    ########################
+    ### make unmarked object 
+    ########################
+    require(unmarked)
+    sp_UMF <- unmarkedFrameOccu(sp15)
+    
+    # plot(sp_UMF, panels=1)
+    # title(main=as.character(sp.names[sp_number]))
+     
+    # add some  covariates
+    siteCovs(sp_UMF) <- cam.and.covs.scaled
+    
+    #######################
+    ## occu models 
+    #######################
+    
+    #  covariates of detection and occupancy in that order.
+    fm0 <- occu(~ 1 ~ 1, sp_UMF) 
+    fm1 <- occu(~ elev ~ elev, sp_UMF)
+    fm2 <- occu(~ elev ~ slope, sp_UMF)
+    # fm3 <- occu(~ elev ~ dist_rd, sp_UMF)
+    fm4 <- occu(~ elev ~ dist_def, sp_UMF)
+    # fm5 <- occu(~ elev ~ dist_def+in_out, sp_UMF)
+    fm6 <- occu(~ basal_a ~ basal_a, sp_UMF)#, starts = c(0.1,0.1,0.1,0.1))
+    fm7 <- occu(~ basal_a ~ elev, sp_UMF)
+    fm8 <- occu(~ basal_a ~ slope, sp_UMF)
+    # fm9 <- occu(~ basal_a ~ dist_rd, sp_UMF)
+    fm10<- occu(~ basal_a ~ dist_def, sp_UMF)
+    # fm11 <- occu(~ basal_a ~ dist_def+in_out, sp_UMF)
+    fm12 <- occu(~ canopy_c ~ canopy_c, sp_UMF, starts = c(0.1,0.1,0.1,0.1))
+    fm13 <- occu(~ canopy_c ~ elev, sp_UMF)
+    fm14 <- occu(~ canopy_c ~ slope, sp_UMF)
+    # fm15 <- occu(~ canopy_c ~ in_out, sp_UMF)
+    fm16 <- occu(~ canopy_c ~ dist_def, sp_UMF, starts = c(0.1,0.1,0.1,0.1))
+    fm17 <- occu(~ canopy_c ~ dist_def+slope, sp_UMF)#, starts = c(0.1,0.1,0.1,0.1,0.1,0.1))
+
+        models <- fitList(
+      'p(.)psi(.)' = fm0,
+      'p(elev)psi(elev)' = fm1,
+      'p(elev)psi(slope)' = fm2,
+      # 'p(elev)psi(dist_rd)' = fm3,
+      'p(elev)psi(dist_def)' = fm4,
+      # 'p(elev)psi(dist_def+dist_rd)' = fm5,
+      'p(basal_a)psi(basal_a)' = fm6,
+      'p(basal_a)psi(elev)' = fm7,
+      'p(basal_a)psi(slope)' = fm8,
+      # 'p(basal_a)psi(dist_rd)' = fm9,
+      'p(basal_a)psi(dist_def)' = fm10,
+      # 'p(basal_a)psi(dist_def+in_out)' = fm11,
+      'p(canopy_c)psi(canopy_c)' = fm12,
+      'p(canopy_c)psi(elev)' = fm13,
+      'p(canopy_c)psi(slope)' = fm14,
+      # 'p(canopy_c)psi(in_out)' = fm15,
+      'p(canopy_c)psi(dist_def)' = fm16,
+      'p(canopy_c)psi(dist_def+slope)' = fm17
+      )
+   
+ modSel(models)  
+    
+    
+  #colnames(newCovs)<- c("site.canopy.s", "date", "time")
+  E.p <- predict(fm14, type="det", newdata=newdata.out, appendData=TRUE)# type puede ser:det psi, col, ext
+  # head(E.p)
+  
+  
+  # Plot it############## detectability
+  plot(Predicted ~ canopy_c, E.p, type="l", ylim=c(-0.1,1),
+       xlab="Canopy cover (standardized)",
+       ylab="Expected detectability")# Expected det
+  lines(lower ~ canopy_c, E.p, type="l", col=gray(0.5))
+  lines(upper ~ canopy_c, E.p, type="l", col=gray(0.5))
+ 
+############## detectability
+     
+  # Plot it again, but this time convert the x-axis back to original scale
+  plot(Predicted ~ canopy_c, E.p, type="l", ylim=c(0,1), col="blue",
+       xlab="Canopy cover (%)",
+       ylab="Detectability",
+       xaxt="n")
+  xticks <- -1:2 #  see wich number equals to var name using: colnames(cam.and.covs)
+  xlabs <- xticks*sd(cam.and.covs[,3]) + mean(cam.and.covs[,3]) #Use the mean and sd of original value to change label name
+  axis(1, at=xticks, labels=round(xlabs, 1))
+  lines(lower ~ canopy_c, E.p, type="l", col=gray(0.5))
+  lines(upper ~ canopy_c, E.p, type="l", col=gray(0.5))
+  
+############## occupancy 
+  E.p2 <- predict(fm14, type="state", newdata=newdata.out, appendData=TRUE)# type puede ser:det state
+  # head(E.p)
+  
+  # Plot it standarzed
+  plot(Predicted ~ slope, E.p2, type="l", ylim=c(0,1),
+       xlab="Slope (standardized)",
+       ylab="Expected Occupancy")# Expected det
+  lines(lower ~ slope, E.p2, type="l", col=gray(0.5))
+  lines(upper ~ slope, E.p2, type="l", col=gray(0.5))
+  
+  # Plot it again, but this time convert the x-axis back to original scale # see names(cam.and.covs)
+  plot(Predicted ~ slope, E.p2, type="l", ylim=c(0,1), col="blue",
+       xlab="Slope",
+       ylab="Occupancy",
+       xaxt="n")
+  xticks <- -1:2
+  xlabs <- xticks*sd(cam.and.covs[,9]) + mean(cam.and.covs[,9]) #Use the mean and sd of original value to change label name
+  axis(1, at=xticks, labels=round(xlabs, 1))
+  lines(lower ~ slope, E.p2, type="l", col=gray(0.5))
+  lines(upper ~ slope, E.p2, type="l", col=gray(0.5))
+  
+  
+############################ 
+########## map
+############################ 
+  
+# dist_def_map.sd<- cellStats(dist.def_paco, 'sd') 
+# dist_def_map.mean<- cellStats(dist.def_paco, 'mean')
+# g.dist_def_map<-(dist.def_paco - dist_def_map.mean)/dist_def_map.sd #map Scaled by sd
+# s <- raster(nrow=600, ncol=400) # remustrea a mas chico
+# s <- resample(g.dist_def_map, s, method='bilinear')
+# dist_def.stack<-stack(g.dist_def_map)
+# names(dist_def.stack)<-"dist_def"
+# # psioccu_cuniculus <- predict(fm16, type="state", newdata=dist_def.stack)# type puede # take a while patience it is a large file!!! 10 x 10 m = 70 Megas
+
+library(spatial.tools)
+#######################################
+### Occupancy map
+#######################################  
+
+
+
+
+# Start a cluster for parallel processing. You must install the "snow" package 
+# # for this to work. Comment out this line, and the endCluster() line at the end 
+# # of this script, if you do NOT want gfcanalysis to run in parallel.
+# if (require(snow)) beginCluster()    
+# ###### Predict
+psioccu_procyon <- predict(fm14, type="state", newdata=cov.stack.standarized)# type puede # take a while patience it is a large file!!! 10 x 10 km = 70 Megas
+# # psioccu_dasypus <- predict_rasterEngine(fm16, type="state",newdata=dist_def.stack)
+# 
+# # Stop the parallel processing cluster
+# if (require(snow)) endCluster()
+# 
+# 
+# 
+# # plot(psioccu_cuniculs) # take a while patience it is a large file!!! 10 x 10 km = 70 Megas
+# 
+# plot(psioccu_eira[[1]])
+library(rasterVis)
+levelplot(psioccu_procyon[[1]], par.settings=RdBuTheme) #occupancy
+# 
+# plot(cam.cords, add=T, col="red")
+# title(main="Occupancy Eira")
+
+# library(colorspace)
+# myTheme=rasterTheme(region=sequential_hcl(10, power=3.3))
+# p <- levelplot(psioccu_cabra2[[1]], par.settings=BuRdTheme) # can be myTheme
+# p + layer(sp.lines(machalilla.limit, lwd=0.8, col='darkgreen'))
+
+# export.asc(x=canopy_map_t, file="D:\\TEAM\\Data\\VB\\covariatesLayers\\canopy_pred.asc")    
+    
+```
+
+ 
+  
+  
+    
+## El mapache (_Leopardus pardalis_)
+### Matriz de datos colapsada a 15 dias
+    
+    ```{r mat_sp13,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,error=FALSE, message=FALSE, fig.height=4,fig.width=7}
+    f.sp.occu.plot.mat(sp_number = 13)
+    ```
+    
+### Selección de Modelos _Leopardus pardalis_
+    ```{r modeo_sps13,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,error=FALSE, message=FALSE, results='asis'}
+    print(as.character(sp.names[sp_number=13]))
+    f.sp.occu.models(sp_number = 13)
+    ```
+    
+    
+
+#### analisis _Leopardus pardalis_p(canopy_c)psi(slope)   sp=13 
+```{r leopardalis ,cache=FALSE,warning=FALSE,eval=TRUE, echo=FALSE,results='asis'}
+    
+
+    sp_number<-13
+    
+    sp15<-f.shrink.matrix.to15(matrix = mat.per.sp[[sp_number]])
+    
+    
+    ########################
+    ### make unmarked object 
+    ########################
+    require(unmarked)
+    sp_UMF <- unmarkedFrameOccu(sp15)
+    
+    # plot(sp_UMF, panels=1)
+    # title(main=as.character(sp.names[sp_number]))
+     
+    # add some  covariates
+    siteCovs(sp_UMF) <- cam.and.covs.scaled
+    
+    #######################
+    ## occu models 
+    #######################
+    
+    #  covariates of detection and occupancy in that order.
+    fm0 <- occu(~ 1 ~ 1, sp_UMF) 
+    fm1 <- occu(~ elev ~ elev, sp_UMF)
+    fm2 <- occu(~ elev ~ slope, sp_UMF)
+    # fm3 <- occu(~ elev ~ dist_rd, sp_UMF)
+    fm4 <- occu(~ elev ~ dist_def, sp_UMF)
+    # fm5 <- occu(~ elev ~ dist_def+in_out, sp_UMF)
+    fm6 <- occu(~ basal_a ~ basal_a, sp_UMF)#, starts = c(0.1,0.1,0.1,0.1))
+    fm7 <- occu(~ basal_a ~ elev, sp_UMF)
+    fm8 <- occu(~ basal_a ~ slope, sp_UMF)
+    # fm9 <- occu(~ basal_a ~ dist_rd, sp_UMF)
+    fm10<- occu(~ basal_a ~ dist_def, sp_UMF)
+    # fm11 <- occu(~ basal_a ~ dist_def+in_out, sp_UMF)
+    fm12 <- occu(~ canopy_c ~ canopy_c, sp_UMF, starts = c(0.1,0.1,0.1,0.1))
+    fm13 <- occu(~ canopy_c ~ elev, sp_UMF)
+    fm14 <- occu(~ canopy_c ~ slope, sp_UMF)
+    # fm15 <- occu(~ canopy_c ~ in_out, sp_UMF)
+    fm16 <- occu(~ canopy_c ~ dist_def, sp_UMF, starts = c(0.1,0.1,0.1,0.1))
+    fm17 <- occu(~ canopy_c ~ dist_def+slope, sp_UMF)#, starts = c(0.1,0.1,0.1,0.1,0.1,0.1))
+
+        models <- fitList(
+      'p(.)psi(.)' = fm0,
+      'p(elev)psi(elev)' = fm1,
+      'p(elev)psi(slope)' = fm2,
+      # 'p(elev)psi(dist_rd)' = fm3,
+      'p(elev)psi(dist_def)' = fm4,
+      # 'p(elev)psi(dist_def+dist_rd)' = fm5,
+      'p(basal_a)psi(basal_a)' = fm6,
+      'p(basal_a)psi(elev)' = fm7,
+      'p(basal_a)psi(slope)' = fm8,
+      # 'p(basal_a)psi(dist_rd)' = fm9,
+      'p(basal_a)psi(dist_def)' = fm10,
+      # 'p(basal_a)psi(dist_def+in_out)' = fm11,
+      'p(canopy_c)psi(canopy_c)' = fm12,
+      'p(canopy_c)psi(elev)' = fm13,
+      'p(canopy_c)psi(slope)' = fm14,
+      # 'p(canopy_c)psi(in_out)' = fm15,
+      'p(canopy_c)psi(dist_def)' = fm16,
+      'p(canopy_c)psi(dist_def+slope)' = fm17
+      )
+   
+ modSel(models)  
+    
+    
+  #colnames(newCovs)<- c("site.canopy.s", "date", "time")
+  E.p <- predict(fm14, type="det", newdata=newdata.out, appendData=TRUE)# type puede ser:det psi, col, ext
+  # head(E.p)
+  
+  
+  # Plot it############## detectability
+  plot(Predicted ~ canopy_c, E.p, type="l", ylim=c(-0.1,1),
+       xlab="Canopy cover (standardized)",
+       ylab="Expected detectability")# Expected det
+  lines(lower ~ canopy_c, E.p, type="l", col=gray(0.5))
+  lines(upper ~ canopy_c, E.p, type="l", col=gray(0.5))
+ 
+############## detectability
+     
+  # Plot it again, but this time convert the x-axis back to original scale
+  plot(Predicted ~ canopy_c, E.p, type="l", ylim=c(0,1), col="blue",
+       xlab="Canopy cover (%)",
+       ylab="Detectability",
+       xaxt="n")
+  xticks <- -1:2 #  see wich number equals to var name using: colnames(cam.and.covs)
+  xlabs <- xticks*sd(cam.and.covs[,3]) + mean(cam.and.covs[,3]) #Use the mean and sd of original value to change label name
+  axis(1, at=xticks, labels=round(xlabs, 1))
+  lines(lower ~ canopy_c, E.p, type="l", col=gray(0.5))
+  lines(upper ~ canopy_c, E.p, type="l", col=gray(0.5))
+  
+############## occupancy 
+  E.p2 <- predict(fm14, type="state", newdata=newdata.out, appendData=TRUE)# type puede ser:det state
+  # head(E.p)
+  
+  # Plot it standarzed
+  plot(Predicted ~ slope, E.p2, type="l", ylim=c(0,1),
+       xlab="Slope (standardized)",
+       ylab="Expected Occupancy")# Expected det
+  lines(lower ~ slope, E.p2, type="l", col=gray(0.5))
+  lines(upper ~ slope, E.p2, type="l", col=gray(0.5))
+  
+  # Plot it again, but this time convert the x-axis back to original scale # see names(cam.and.covs)
+  plot(Predicted ~ slope, E.p2, type="l", ylim=c(0,1), col="blue",
+       xlab="Slope",
+       ylab="Occupancy",
+       xaxt="n")
+  xticks <- -1:2
+  xlabs <- xticks*sd(cam.and.covs[,9]) + mean(cam.and.covs[,9]) #Use the mean and sd of original value to change label name
+  axis(1, at=xticks, labels=round(xlabs, 1))
+  lines(lower ~ slope, E.p2, type="l", col=gray(0.5))
+  lines(upper ~ slope, E.p2, type="l", col=gray(0.5))
+  
+  
+############################ 
+########## map
+############################ 
+  
+# dist_def_map.sd<- cellStats(dist.def_paco, 'sd') 
+# dist_def_map.mean<- cellStats(dist.def_paco, 'mean')
+# g.dist_def_map<-(dist.def_paco - dist_def_map.mean)/dist_def_map.sd #map Scaled by sd
+# s <- raster(nrow=600, ncol=400) # remustrea a mas chico
+# s <- resample(g.dist_def_map, s, method='bilinear')
+# dist_def.stack<-stack(g.dist_def_map)
+# names(dist_def.stack)<-"dist_def"
+# # psioccu_cuniculus <- predict(fm16, type="state", newdata=dist_def.stack)# type puede # take a while patience it is a large file!!! 10 x 10 m = 70 Megas
+
+library(spatial.tools)
+#######################################
+### Occupancy map
+#######################################  
+
+
+
+
+# Start a cluster for parallel processing. You must install the "snow" package 
+# # for this to work. Comment out this line, and the endCluster() line at the end 
+# # of this script, if you do NOT want gfcanalysis to run in parallel.
+# if (require(snow)) beginCluster()    
+# ###### Predict
+psioccu_lepoardus_pardalis <- predict(fm14, type="state", newdata=cov.stack.standarized)# type puede # take a while patience it is a large file!!! 10 x 10 km = 70 Megas
+# # psioccu_dasypus <- predict_rasterEngine(fm16, type="state",newdata=dist_def.stack)
+# 
+# # Stop the parallel processing cluster
+# if (require(snow)) endCluster()
+# 
+# 
+# 
+# # plot(psioccu_cuniculs) # take a while patience it is a large file!!! 10 x 10 km = 70 Megas
+# 
+# plot(psioccu_eira[[1]])
+library(rasterVis)
+levelplot(psioccu_lepoardus_pardalis[[1]], par.settings=RdBuTheme) #occupancy
+# 
+# plot(cam.cords, add=T, col="red")
+# title(main="Occupancy Eira")
+
+# library(colorspace)
+# myTheme=rasterTheme(region=sequential_hcl(10, power=3.3))
+# p <- levelplot(psioccu_cabra2[[1]], par.settings=BuRdTheme) # can be myTheme
+# p + layer(sp.lines(machalilla.limit, lwd=0.8, col='darkgreen'))
+
+# export.asc(x=canopy_map_t, file="D:\\TEAM\\Data\\VB\\covariatesLayers\\canopy_pred.asc")    
+    
+```
+
+  
+  
+  
+  
+  
+  
+  
+  
+    
+    
+    
+    
+    # Codigo en R
+    ## Función para calendario
+    ```{r calendarfunction, eval=TRUE, echo=TRUE, comment="", highlight=TRUE, prompt=FALSE, tidy=TRUE}
+    print(f.calendar.yr)
+    
+    ```
+    
+    ## Función para análisis de ocupación
+    ```{r occufunction, eval=TRUE, echo=TRUE, comment="", highlight=TRUE, prompt=FALSE, tidy=TRUE}
+    print(f.sp.occu.models)
+    
+    ```
+    
+    
+    ## Función para análisis multiespecie riqueza y acumulacion
+    Riqueza de especies y acumulación, modelando la ocurrencia y la detectabilidad. Este codigo es adaptado del método de Dorazio et al. (2006).
+    ```{r multispoccu, eval=TRUE, echo=TRUE, comment="", highlight=TRUE, prompt=FALSE, tidy=TRUE}
+    print(MultiSpeciesSiteOcc)
+    
+    ```
+    
+    
+    ## Información de sesión en R
+    Y por último se proporciona la información de nuestra sesión en R para poder hacer "proper reproducible research".
+    ```{r session_info, comment="", highlight=TRUE, prompt=FALSE, tidy=TRUE}
+    sessionInfo()
+    ```
+    
+    ## References
+    
+    
