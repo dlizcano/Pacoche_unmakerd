@@ -340,8 +340,8 @@ pacoche.arr_1_3<-pacoche.raw[c(-index_4_1,
     
     # counting how many (total) records per species by all days
     cont.per.sp<-data.frame(row.names = sp.names)
-    row.per.sp<-as.data.frame(matrix(nrow = length(sp.names), ncol=c(59)))
-    col.per.sp<-as.data.frame(matrix(nrow = length(sp.names), ncol=c(161)))
+    row.per.sp<-as.data.frame(matrix(nrow = length(sp.names), ncol=c(63)))
+    col.per.sp<-as.data.frame(matrix(nrow = length(sp.names), ncol=c(194)))
     rownames(row.per.sp)<-sp.names
     rownames(col.per.sp)<-sp.names
     
@@ -445,9 +445,9 @@ proj4string(cam.cords)<-geo # set cords
 e<-extent (-80.917,-80.788, -1.190, -1.019)
 elevation.crop<-crop(elevationpaco, e)
 
-plot(elevation.crop)
+# plot(elevation.crop)
 # plot(cam.cords, add=T)
-points(cam.cords, pch=20, cex=.1) 
+# points(cam.cords, pch=20, cex=.1) 
 
 slope<-terrain(elevation.crop, opt='slope', unit='degrees', neighbors=4)
 
@@ -486,7 +486,8 @@ pacochelimit <- readShapePoly(fn="C:/Users/Diego/Documents/GitHub/Pacoche_unmake
 geo <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0") #def cord
 proj4string(pacochelimit)<-geo # set cords
 
-
+################################### 
+### plot elev point limit
 
 plot(elevation.crop)
 plot(pacochelimit, add=T)
@@ -521,19 +522,19 @@ length(index.in)
 length(index.out)
 
 ######## plot to check
-plot(just.out, col="red" )
-plot(just.in,  add=T)
-plot(pacochelimit, add=T)
+# plot(just.out, col="red" )
+# plot(just.in,  add=T)
+# plot(pacochelimit, add=T)
 
 
-plot(just.in, col="red")
-plot(pacochelimit, add=T)
-text(just.out, labels=just.out$camera_trap, cex = .5)
+# plot(just.in, col="red")
+# plot(pacochelimit, add=T)
+# text(just.out, labels=just.out$camera_trap, cex = .5)
 
 
-plot(just.out, col="red")
-plot(pacochelimit, add=T)
-text(just.out, labels=just.out$camera_trap, cex = .5)
+# plot(just.out, col="red")
+# plot(pacochelimit, add=T)
+# text(just.out, labels=just.out$camera_trap, cex = .5)
 
 ############ add new column in_out and merge
 # cam.in<-as.data.frame(just.in)
@@ -575,13 +576,15 @@ deforestado <- reclassify(dist.def.e, rclmat)
 # plot(deforestado, col="red", add=T)
 dist.def_paco <- distance(deforestado) # make distance from not raster category 3 to fill NAs
 writeRaster(dist.def_paco, filename="dist_def_paco_r3.tif", format="GTiff", overwrite=TRUE)
-plot(dist.def_paco)
+# plot(dist.def_paco)
 dist.def.r <- resample(dist.def_paco, elevation.crop, method='bilinear')
-plot(dist.def.r)
+# plot(dist.def.r)
 dist.def.m <- mask(dist.def.r, elevation.crop)
 plot(dist.def.m)
-plot(cam.cords, add=T)
-text(just.out, labels=cam.cords$camera_trap, cex = .5)
+plot(pacochelimit, add=T)
+points(cam.cords, pch=20, cex=.1) 
+# plot(cam.cords, add=T)
+# text(just.out, labels=cam.cords$camera_trap, cex = .5)
 
 # plot(deforestado, col="red", add=T)
 
@@ -685,6 +688,10 @@ cam.and.covs.scaled <-cbind(scale(cam.and.covs[2],center = T,scale = T),
 # 
 # cov.stack.standarized<-stack(elev.standarized, slope.standarized, dist_def.standarized)
 #  
+# library(rasterVis)
+plot(cov.stack)
+
+
 
 
     
@@ -725,6 +732,7 @@ cam.and.covs.scaled <-cbind(scale(cam.and.covs[2],center = T,scale = T),
       
       library(unmarked)
       library(knitr)
+      library(AICcmodavg)
       
       sp15<-f.shrink.matrix.to15(matrix = mat.per.sp[[sp_number]])
       
@@ -747,47 +755,43 @@ cam.and.covs.scaled <-cbind(scale(cam.and.covs[2],center = T,scale = T),
       
       #  covariates of detection and occupancy in that order.
       fm0 <- occu(~ 1 ~ 1, sp_UMF) 
-      fm1 <- occu(~ 1 ~ elev, sp_UMF)
-      fm2 <- occu(~ 1 ~ slope, sp_UMF)
-      fm3 <- occu(~ 1 ~ dist_def, sp_UMF)
-      fm4 <- occu(~ 1 ~ dist_rd, sp_UMF)
-      fm5 <- occu(~ 1 ~ canopy_h, sp_UMF)
-      fm6 <- occu(~ 1 ~ canopy_c, sp_UMF)
-      fm7 <- occu(~ 1 ~ basal_a, sp_UMF)
-      fm8 <- occu(~ 1 ~ in_out, sp_UMF)
-      fm9 <- occu(~ elev ~ elev, sp_UMF)
-      fm10 <- occu(~ elev ~ slope, sp_UMF)
-      fm11 <- occu(~ elev ~ dist_def, sp_UMF)
-      fm12 <- occu(~ elev ~ dist_rd, sp_UMF)
-      fm13 <- occu(~ elev ~ canopy_h, sp_UMF)
-      fm14 <- occu(~ elev ~ canopy_c, sp_UMF)
-      fm15 <- occu(~ elev ~ basal_a, sp_UMF)
-      fm16 <- occu(~ elev ~ in_out, sp_UMF)
-      fm17 <- occu(~ basal_a ~ elev, sp_UMF)
-      fm18 <- occu(~ basal_a ~ slope, sp_UMF)
-      fm19 <- occu(~ basal_a ~ dist_def, sp_UMF)
-      fm20 <- occu(~ basal_a ~ dist_rd, sp_UMF)
-      fm21 <- occu(~ basal_a ~ canopy_h, sp_UMF)
-      fm22 <- occu(~ basal_a ~ canopy_c, sp_UMF)
-      fm23 <- occu(~ basal_a ~ basal_a, sp_UMF)
-      fm24 <- occu(~ basal_a ~ in_out, sp_UMF)
+      fm1 <- occu(~ elev ~ elev, sp_UMF)
+      fm2 <- occu(~ elev ~ slope, sp_UMF)
+      fm3 <- occu(~ elev ~ dist_def, sp_UMF)
+      fm4 <- occu(~ elev ~ dist_rd, sp_UMF)
+      fm5 <- occu(~ elev ~ canopy_h, sp_UMF)
+      fm6 <- occu(~ elev ~ canopy_c, sp_UMF)
+      fm7 <- occu(~ elev ~ basal_a, sp_UMF)
+      fm8 <- occu(~ elev ~ in_out, sp_UMF)
+      fm9 <- occu(~ basal_a ~ elev, sp_UMF)
+      fm10 <- occu(~ basal_a ~ slope, sp_UMF)
+      fm11 <- occu(~ basal_a ~ dist_def, sp_UMF)
+      fm12 <- occu(~ basal_a ~ dist_rd, sp_UMF)
+      fm13 <- occu(~ basal_a ~ canopy_h, sp_UMF)
+      fm14 <- occu(~ basal_a ~ canopy_c, sp_UMF)
+      fm15 <- occu(~ basal_a ~ basal_a, sp_UMF)
+      fm16 <- occu(~ basal_a ~ in_out, sp_UMF)
 
       
       # put the names of each model
       models <- fitList(
         'p(.)psi(.)' = fm0,
-        'p(.)psi(elev)' = fm1,
-        'p(.)psi(slope)' = fm2,
-        'p(.)psi(dist_def)' = fm3,
-        'p(elev)psi(elev)' = fm4,
-        'p(elev)psi(slope)' = fm5,
-        'p(elev)psi(dist_def)' = fm6,
-        'p(basal_a)psi(.)' = fm7,
-        'p(basal_a)psi(elev)' = fm8,
-        'p(basal_a)psi(canopy_c)' = fm9,
-        'p(.)psi(canopy_c)' = fm10,
-        'p(.)psi(in_out+elev)' = fm11,
-        'p(.)psi(in_out+dist_def)' = fm12
+        'p(elev)psi(elev)' = fm1,
+        'p(elev)psi(slope)' = fm2,
+        'p(elev)psi(dist_def)' = fm3,
+        'p(elev)psi(dist_rd)' = fm4,
+        'p(elev)psi(canopy_h)' = fm5,
+        'p(elev)psi(canopy_c)' = fm6,
+        'p(elev)psi(basal_a)' = fm7,
+        'p(elev)psi(in_out)' = fm8,
+        'p(basal_a)psi(elev)' = fm9,
+        'p(basal_a)psi(slope)' = fm10,
+        'p(basal_a)psi(dist_def)' = fm11,
+        'p(basal_a)psi(dist_rd)' = fm12,
+        'p(basal_a)psi(canopy_h)' = fm13,
+        'p(basal_a)psi(canopy_c)' = fm14,
+        'p(basal_a)psi(basal_a)' = fm15,
+        'p(basal_a)psi(in_out)' = fm16
       )
       
       ms <- modSel(models)
@@ -808,11 +812,46 @@ cam.and.covs.scaled <-cbind(scale(cam.and.covs[2],center = T,scale = T),
       colnames(mat_models)<-c(modelo, "nPars",'AIC', "delta", "AICwt", "cumltvWt") # change row names
       
       ##Print los 7 primeros modelos
-      xtable(mat_models)
-      kable(mat_models)
+      # xtable(mat_models)
+      # kable(mat_models)
       # print(spname)
       # print (mat_models[c(1:7),])
       # as.character(sp.names[sp_number])
+   
+  #########################################
+  # Mdel selection based on AIC
+  #########################################
+  candModels<-list(fm0,fm1, fm2, fm3, fm4, fm5, fm6, fm7, fm8, fm9, fm10, 
+                   fm11, fm12, fm13, fm14, fm15, fm16)
+  modelNames <- as.vector(ms@ Full[1][,1])
+  msAICc<-aictab(cand.set = candModels, modnames = modelNames)
+  # print(msAICc)
+  msAICc_df<-as.data.frame(msAICc)
+  
+  model_coef<-matrix(nrow=17,ncol = 4)
+  # get coeficients in the order: psi(Int) psi(cov) p(Int) p(cov) 
+ model_coef[1,]<-as.vector(coef(fm0))
+ model_coef[2,]<-as.vector(coef(fm1))
+ model_coef[3,]<-as.vector(coef(fm2))
+ model_coef[4,]<-as.vector(coef(fm3))
+ model_coef[5,]<-as.vector(coef(fm4))
+ model_coef[6,]<-as.vector(coef(fm5))
+ model_coef[7,]<-as.vector(coef(fm6))
+ model_coef[8,]<-as.vector(coef(fm7))
+ model_coef[9,]<-as.vector(coef(fm8))
+ model_coef[10,]<-as.vector(coef(fm9))
+ model_coef[11,]<-as.vector(coef(fm10))
+ model_coef[12,]<-as.vector(coef(fm11))
+ model_coef[13,]<-as.vector(coef(fm12))
+ model_coef[14,]<-as.vector(coef(fm13))
+ model_coef[15,]<-as.vector(coef(fm14))
+ model_coef[16,]<-as.vector(coef(fm15))
+ model_coef[17,]<-as.vector(coef(fm16))
+ 
+ 
+  colnames(model_coef)<-c("psi(Int)", "psi(cov)", "p(Int)", "p(cov)")
+  msAICc_f<-cbind(msAICc_df,as.data.frame(model_coef))
+  print(msAICc_f) 
       
     }
     
@@ -864,7 +903,8 @@ cam.and.covs.scaled <-cbind(scale(cam.and.covs[2],center = T,scale = T),
                           canopy_c=seq(-1.9770, 1.6965, length=100),
                           slope=seq(-1.57302, 2.14090 , length=100),
                           dist_def=seq(-1.3035 , 2.5716, length=100), 
-                          in_out = c(rep("in", 99), rep("out", 1) ) ) #
+                          dist_rd=seq(-1.015052, 2.829409, length=100),
+                          in_out = c(rep("in", 100)))#, rep("out", 1) ) ) #
     
     newdata.out <- data.frame(basal_a=seq(-1.1172, 4.1706, length=100), 
                           elev=seq(-1.95634, 1.67393, length=100),
@@ -872,7 +912,8 @@ cam.and.covs.scaled <-cbind(scale(cam.and.covs[2],center = T,scale = T),
                           canopy_c=seq(-1.9770, 1.6965, length=100),
                           slope=seq(-1.57302, 2.14090 , length=100),
                           dist_def=seq(-1.3035 , 2.5716, length=100),
-                          in_out = c(rep("out", 99), rep("in", 1) ))
+                          dist_rd=seq(-1.015052, 2.829409, length=100),
+                          in_out = c(rep("out", 100))) #, rep("in", 1) ))
     
     
     
@@ -881,7 +922,7 @@ cam.and.covs.scaled <-cbind(scale(cam.and.covs[2],center = T,scale = T),
 #     
 #     predict(fm12, type="det", newdata=newdata)
 #     
-    
+    both.in_out<-rbind(newdata.in,newdata.out)
     
     ```
     
@@ -922,7 +963,8 @@ cam.and.covs.scaled <-cbind(scale(cam.and.covs[2],center = T,scale = T),
     #### analisis _Cuniculus paca_ p(canopy_c)psi(dist_def)  sp=3 
 ```{r cuniculus, cache=FALSE,warning=FALSE,eval=TRUE, echo=FALSE,results='asis'}
     
-
+library(AICcmodavg)
+    
     sp_number<-3
     
     sp15<-f.shrink.matrix.to15(matrix = mat.per.sp[[sp_number]])
@@ -944,46 +986,50 @@ cam.and.covs.scaled <-cbind(scale(cam.and.covs[2],center = T,scale = T),
     ## occu models 
     #######################
     
-    #  covariates of detection and occupancy in that order.
-    fm0 <- occu(~ 1 ~ 1, sp_UMF) 
-    fm1 <- occu(~ elev ~ elev, sp_UMF)
-    fm2 <- occu(~ elev ~ slope, sp_UMF)
-    # fm3 <- occu(~ elev ~ dist_rd, sp_UMF)
-    fm4 <- occu(~ elev ~ dist_def, sp_UMF)
-    # fm5 <- occu(~ elev ~ dist_def+in_out, sp_UMF)
-    fm6 <- occu(~ basal_a ~ basal_a, sp_UMF)#, starts = c(0.1,0.1,0.1,0.1))
-    fm7 <- occu(~ basal_a ~ elev, sp_UMF)
-    fm8 <- occu(~ basal_a ~ slope, sp_UMF)
-    # fm9 <- occu(~ basal_a ~ dist_rd, sp_UMF)
-    fm10<- occu(~ basal_a ~ dist_def, sp_UMF)
-    # fm11 <- occu(~ basal_a ~ dist_def+in_out, sp_UMF)
-    fm12 <- occu(~ canopy_c ~ canopy_c, sp_UMF, starts = c(0.1,0.1,0.1,0.1))
-    fm13 <- occu(~ canopy_c ~ elev, sp_UMF)
-    fm14 <- occu(~ canopy_c ~ slope, sp_UMF)
-    # fm15 <- occu(~ canopy_c ~ in_out, sp_UMF)
-    fm16 <- occu(~ canopy_c ~ dist_def, sp_UMF, starts = c(0.1,0.1,0.1,0.1))
-    # fm17 <- occu(~ canopy_c ~ dist_def+in_out, sp_UMF, starts = c(0.1,0.5,0.7,0.8,1))
+     #  covariates of detection and occupancy in that order.
+      fm0 <- occu(~ 1 ~ 1, sp_UMF) 
+      fm1 <- occu(~ elev ~ elev, sp_UMF)
+      fm2 <- occu(~ elev ~ slope, sp_UMF)
+      fm3 <- occu(~ elev ~ dist_def, sp_UMF)
+      fm4 <- occu(~ elev ~ dist_rd, sp_UMF)
+      fm5 <- occu(~ elev ~ canopy_h, sp_UMF)
+      fm6 <- occu(~ elev ~ canopy_c, sp_UMF)
+      fm7 <- occu(~ elev ~ basal_a, sp_UMF)
+      fm8 <- occu(~ elev ~ in_out, sp_UMF)
+      fm9 <- occu(~ basal_a ~ elev, sp_UMF)
+      fm10 <- occu(~ basal_a ~ slope, sp_UMF)
+      fm11 <- occu(~ basal_a ~ dist_def, sp_UMF)
+      fm12 <- occu(~ basal_a ~ dist_rd, sp_UMF)
+      fm13 <- occu(~ basal_a ~ canopy_h, sp_UMF)
+      fm14 <- occu(~ basal_a ~ canopy_c, sp_UMF)
+      fm15 <- occu(~ basal_a ~ basal_a, sp_UMF)
+      fm16 <- occu(~ basal_a ~ in_out, sp_UMF)
 
-        models <- fitList(
-      'p(.)psi(.)' = fm0,
-      'p(elev)psi(elev)' = fm1,
-      'p(elev)psi(slope)' = fm2,
-      # 'p(elev)psi(dist_rd)' = fm3,
-      'p(elev)psi(dist_def)' = fm4,
-      # 'p(elev)psi(dist_def+dist_rd)' = fm5,
-      'p(basal_a)psi(basal_a)' = fm6,
-      'p(basal_a)psi(elev)' = fm7,
-      'p(basal_a)psi(slope)' = fm8,
-      # 'p(basal_a)psi(dist_rd)' = fm9,
-      'p(basal_a)psi(dist_def)' = fm10,
-      # 'p(basal_a)psi(dist_def+in_out)' = fm11,
-      'p(canopy_c)psi(canopy_c)' = fm12,
-      'p(canopy_c)psi(elev)' = fm13,
-      'p(canopy_c)psi(slope)' = fm14,
-      # 'p(canopy_c)psi(in_out)' = fm15,
-      'p(canopy_c)psi(dist_def)' = fm16
-      # 'p(canopy_c)psi(dist_def+in_out)' = fm17
+      
+      # put the names of each model
+      models <- fitList(
+        'p(.)psi(.)' = fm0,
+        'p(elev)psi(elev)' = fm1,
+        'p(elev)psi(slope)' = fm2,
+        'p(elev)psi(dist_def)' = fm3,
+        'p(elev)psi(dist_rd)' = fm4,
+        'p(elev)psi(canopy_h)' = fm5,
+        'p(elev)psi(canopy_c)' = fm6,
+        'p(elev)psi(basal_a)' = fm7,
+        'p(elev)psi(in_out)' = fm8,
+        'p(basal_a)psi(elev)' = fm9,
+        'p(basal_a)psi(slope)' = fm10,
+        'p(basal_a)psi(dist_def)' = fm11,
+        'p(basal_a)psi(dist_rd)' = fm12,
+        'p(basal_a)psi(canopy_h)' = fm13,
+        'p(basal_a)psi(canopy_c)' = fm14,
+        'p(basal_a)psi(basal_a)' = fm15,
+        'p(basal_a)psi(in_out)' = fm16
       )
+      
+      ms <- modSel(models)
+      # (ms)
+
    
  modSel(models)  
     
@@ -991,6 +1037,29 @@ cam.and.covs.scaled <-cbind(scale(cam.and.covs[2],center = T,scale = T),
   #colnames(newCovs)<- c("site.canopy.s", "date", "time")
   E.p <- predict(fm16, type="det", newdata=newdata.out, appendData=TRUE)# type puede ser:det psi, col, ext
   # head(E.p)
+  
+  
+  
+  
+  
+  ##model list
+Cands2 <- list(fm16, fm8, fm12)
+Modnames2 <- c("p(basal_a)psi(in_out)", "p(elev)psi(in_out)", "p(basal_a)psi(dist_rd)")
+##compute model-averaged predictions of abundance for values of elev
+output <- modavgPred(cand.set = Cands2, modnames = Modnames2, 
+                     newdata = newdata.in, parm.type = "psi", # or "detect"
+                     type = "response")
+
+plot(output$mod.avg.pred, seq(from = -1.4, to = 2.4, by = 0.1), type = "l")
+lines(output$upper.CL, seq(from = -1.4, to = 2.4, by = 0.1), type = "l", col = "red", lty = 2)
+plot(output$lower.CL, seq(from = -1.4, to = 2.4, by = 0.1), type = "l")
+
+output$lower.CL[1]
+output$lower.CL[2]
+
+str(output)
+  
+  
   
   
   # Plot it############## detectability
