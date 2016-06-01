@@ -756,23 +756,23 @@ plot(cov.stack)
       #######################
       
       #  covariates of detection and occupancy in that order.
-      fm1 <- occu(~ 1 ~ 1, sp_UMF) 
-      fm2 <- occu(~ elev ~ elev, sp_UMF)
-      fm3 <- occu(~ elev ~ slope, sp_UMF)
-      fm4 <- occu(~ elev ~ dist_def, sp_UMF)
-      fm5 <- occu(~ elev ~ dist_rd, sp_UMF)
-      fm6 <- occu(~ elev ~ canopy_h, sp_UMF)
-      fm7 <- occu(~ elev ~ canopy_c, sp_UMF)
-      fm8 <- occu(~ elev ~ basal_a, sp_UMF)
-      fm9 <- occu(~ elev ~ in_out, sp_UMF)
-      fm10 <- occu(~ basal_a ~ elev, sp_UMF)
-      fm11 <- occu(~ basal_a ~ slope, sp_UMF)
-      fm12 <- occu(~ basal_a ~ dist_def, sp_UMF)
-      fm13 <- occu(~ basal_a ~ dist_rd, sp_UMF)
-      fm14 <- occu(~ basal_a ~ canopy_h, sp_UMF)
-      fm15 <- occu(~ basal_a ~ canopy_c, sp_UMF)
-      fm16 <- occu(~ basal_a ~ basal_a, sp_UMF)
-      fm17 <- occu(~ basal_a ~ in_out, sp_UMF)
+      fm1 <- occu(~ 1 ~ 1, sp_UMF, method="SANN") 
+      fm2 <- occu(~ elev ~ elev, sp_UMF, method="SANN")
+      fm3 <- occu(~ elev ~ slope, sp_UMF, method="SANN")
+      fm4 <- occu(~ elev ~ dist_def, sp_UMF, method="SANN")
+      fm5 <- occu(~ elev ~ dist_rd, sp_UMF, method="SANN")
+      fm6 <- occu(~ elev ~ canopy_h, sp_UMF, method="SANN")
+      fm7 <- occu(~ elev ~ canopy_c, sp_UMF, method="SANN")
+      fm8 <- occu(~ elev ~ basal_a, sp_UMF, method="SANN")
+      fm9 <- occu(~ elev ~ in_out, sp_UMF, method="SANN")
+      fm10 <- occu(~ basal_a ~ elev, sp_UMF, method="SANN")
+      fm11 <- occu(~ basal_a ~ slope, sp_UMF, method="SANN")
+      fm12 <- occu(~ basal_a ~ dist_def, sp_UMF, method="SANN")
+      fm13 <- occu(~ basal_a ~ dist_rd, sp_UMF, method="SANN")
+      fm14 <- occu(~ basal_a ~ canopy_h, sp_UMF, method="SANN")
+      fm15 <- occu(~ basal_a ~ canopy_c, sp_UMF, method="SANN")
+      fm16 <- occu(~ basal_a ~ basal_a, sp_UMF, method="SANN")
+      fm17 <- occu(~ basal_a ~ in_out, sp_UMF, method="SANN")
 
       
       # put the names of each model
@@ -2465,7 +2465,7 @@ dev.off( )
     f.sp.occu.plot.mat(sp_number = 26)
     ```
     
-### Selección de Modelos _Leopardus wiedii_
+### Selección de Modelos _Dasyprocta punctata_
     ```{r modeo_sps26,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,error=FALSE, message=FALSE, results='asis'}
     print(as.character(sp.names[sp_number=26]))
     f.sp.occu.models(sp_number = 26)
@@ -2473,11 +2473,11 @@ dev.off( )
     
     
 
-#### analisis _Leopardus wiedii_ p(elev)psi(canopy_c)   sp=10 
+#### analisis _Dasyprocta punctata_ p(basal_a)psi(dist_rd)  sp=26 
 ```{r nieque ,cache=FALSE,warning=FALSE,eval=TRUE, echo=FALSE,results='asis'}
     
 
-    sp_number<-10
+    sp_number<-26
     
     sp15<-f.shrink.matrix.to15(matrix = mat.per.sp[[sp_number]])
     
@@ -2604,35 +2604,35 @@ dev.off( )
   ########### Model averagign
   ##########################################   
 # ##model list
-# Cands2 <- list(fm14, fm6)
-# Modnames2 <- c("p(basal_a)psi(canopy_c)", "p(elev)psi(canopy_c)")
-# 
-# evidence(aic.table = aictab(cand.set = Cands2, modnames = Modnames2))
-# 
-# ##compute model-averaged predictions of abundance for values of in_out
-# output.psi <- modavgPred(cand.set = Cands2, 
-#                      modnames = Modnames2, 
-#                      newdata = newdata.out, 
-#                      parm.type = "detect", #"det"), # or "detect"
-#                      type = "response")
-# out.preds.logit <- modavgPred(cand.set = Cands2, 
-#                      modnames = Modnames2, 
-#                      newdata = newdata.out, 
-#                      parm.type = "detect", # "psi"), #detect"), # or "detect"
-#                      type = "link")
-# avg_result<-output.psi$matrix.output[, c("mod.avg.pred", "uncond.se", "lower.CL", "upper.CL")]
-# 
-# pred.data12<-newdata.out
-# ##add predictions to data set to keep everything in the same place
-# pred.data12$fit <- avg_result[,1]
-# pred.data12$se.fit <- avg_result[,2]
-# ##compute 95% CI on logit scale, then back transform 
-# ##these asymmetric CI's have better properties
-# pred.data12$low95 <- plogis(out.preds.logit$mod.avg.pred - 
-#                           1.96 * out.preds.logit$uncond.se)
-# pred.data12$upp95 <- plogis(out.preds.logit$mod.avg.pred + 
-#                           1.96 * out.preds.logit$uncond.se)
-# 
+ Cands2 <- list(fm12, fm4, fm13)
+ Modnames2 <- c("p(basal_a)psi(dist_rd)", "p(elev)psi(dist_rd)", "p(basal_a)psi(canopy_h)")
+
+evidence(aic.table = aictab(cand.set = Cands2, modnames = Modnames2))
+
+##compute model-averaged predictions of abundance for values of in_out
+output.psi <- modavgPred(cand.set = Cands2, 
+                     modnames = Modnames2, 
+                     newdata = newdata.out, 
+                     parm.type = "detect", #"det"), # or "psi" 
+                     type = "response")
+out.preds.logit <- modavgPred(cand.set = Cands2, 
+                     modnames = Modnames2, 
+                     newdata = newdata.out, 
+                     parm.type = "detect", # "psi"), #detect"), # or "detect"
+                     type = "link")
+avg_result<-output.psi$matrix.output[, c("mod.avg.pred", "uncond.se", "lower.CL", "upper.CL")]
+
+pred.data26<-newdata.out
+##add predictions to data set to keep everything in the same place
+pred.data26$fit <- avg_result[,1]
+pred.data26$se.fit <- avg_result[,2]
+##compute 95% CI on logit scale, then back transform 
+##these asymmetric CI's have better properties
+pred.data26$low95 <- plogis(out.preds.logit$mod.avg.pred - 
+                          1.96 * out.preds.logit$uncond.se)
+pred.data26$upp95 <- plogis(out.preds.logit$mod.avg.pred + 
+                          1.96 * out.preds.logit$uncond.se)
+
 # ################
 
   
@@ -2640,22 +2640,22 @@ dev.off( )
   
   
   
-pred_p10<-predict(fm6, type="det",newdata=newdata.out, appendData=TRUE) # or state
+# pred_p10<-predict(fm6, type="det",newdata=newdata.out, appendData=TRUE) # or state
   
   
   ########################################## 
   ########### plot  detectability
   ########################################## 
 
-png(file = "C:/Users/Diego/Documents/CodigoR/Pacoche_unmakerd/fig/p_L_wiedii.png", width = 1200, height = 1200, res = 300)
+png(file = "C:/Users/Diego/Documents/CodigoR/Pacoche_unmakerd/fig/p_D_punctata.png", width = 1200, height = 1200, res = 300)
 par(mar = c(5, 4, 2, 2) + 0.1)
 
-  plot(Predicted ~ elev, pred_p10, type="l", ylim=c(-0.1,1), col="blue",
+  plot(fit ~ elev, pred.data26, type="l", ylim=c(-0.1,1), col="blue",
        xlab="Elevation (m)",
        ylab="Detectability",
        xaxt="n")# 
-  lines(lower ~ elev, pred_p10, type="l", col=gray(0.5))
-  lines(upper ~ elev, pred_p10, type="l", col=gray(0.5))
+  lines(low95 ~ elev, pred.data26, type="l", col=gray(0.5))
+  lines(upp95 ~ elev, pred.data26, type="l", col=gray(0.5))
  
   xticks <- -2:2 # see min(cam.and.covs.scaled$elev) #  see wich number equals to var name using: colnames(cam.and.covs)
   xlabs <- xticks*sd(cam.and.covs[,8]) + mean(cam.and.covs[,8]) #Use the mean and sd of original value to change label name
@@ -2690,17 +2690,39 @@ dev.off( )
 #                           1.96 * out.preds.logit$uncond.se)
 
 ################
-E.p2 <- predict(fm6, type="state", newdata=newdata.out, appendData=TRUE)# type puede ser:det
+# E.p2 <- predict(fm6, type="state", newdata=newdata.out, appendData=TRUE)# type puede ser:det
+output.psi <- modavgPred(cand.set = Cands2, 
+                     modnames = Modnames2, 
+                     newdata = newdata.out, 
+                     parm.type = "psi", #"det"), # or "psi" 
+                     type = "response")
+out.preds.logit <- modavgPred(cand.set = Cands2, 
+                     modnames = Modnames2, 
+                     newdata = newdata.out, 
+                     parm.type = "psi", # "psi"), #detect"), # or "detect"
+                     type = "link")
+avg_result<-output.psi$matrix.output[, c("mod.avg.pred", "uncond.se", "lower.CL", "upper.CL")]
 
-png(file = "C:/Users/Diego/Documents/CodigoR/Pacoche_unmakerd/fig/occu_L_wiedii.png", width = 1200, height = 1200, res = 300)
+pred.data26<-newdata.out
+##add predictions to data set to keep everything in the same place
+pred.data26$fit <- avg_result[,1]
+pred.data26$se.fit <- avg_result[,2]
+##compute 95% CI on logit scale, then back transform 
+##these asymmetric CI's have better properties
+pred.data26$low95 <- plogis(out.preds.logit$mod.avg.pred - 
+                          1.96 * out.preds.logit$uncond.se)
+pred.data26$upp95 <- plogis(out.preds.logit$mod.avg.pred + 
+                          1.96 * out.preds.logit$uncond.se)
+
+png(file = "C:/Users/Diego/Documents/CodigoR/Pacoche_unmakerd/fig/occu_D_punctata.png", width = 1200, height = 1200, res = 300)
 par(mar = c(5, 4, 2, 2) + 0.1)
 
-  plot(Predicted ~ canopy_c, E.p2, type="l", ylim=c(-0.1,1), col="blue",
+  plot(fit ~ canopy_c, pred.data26, type="l", ylim=c(-0.1,1), col="blue",
        xlab="Canopy cover",
        ylab="Occupancy probability",
        xaxt="n")# 
-  lines(lower ~ canopy_c, E.p2, type="l", col=gray(0.5))
-  lines(upper ~ canopy_c, E.p2, type="l", col=gray(0.5))
+  lines(low95 ~ canopy_c, pred.data26, type="l", col=gray(0.5))
+  lines(upp95 ~ canopy_c, pred.data26, type="l", col=gray(0.5))
  
   xticks <- -1.5:2 # see min(cam.and.covs.scaled$elev) #  see wich number equals to var name using: colnames(cam.and.covs)
   xlabs <- xticks*sd(cam.and.covs[,3]) + mean(cam.and.covs[,3]) #Use the mean and sd of original value to change label name
@@ -2767,7 +2789,7 @@ dev.off( )
     
     sp15<-f.shrink.matrix.to15(matrix = mat.per.sp[[sp_number]])
     
-    
+
     ########################
     ### make unmarked object 
     ########################
@@ -2784,112 +2806,245 @@ dev.off( )
     ## occu models 
     #######################
     
-    #  covariates of detection and occupancy in that order.
-    fm0 <- occu(~ 1 ~ 1, sp_UMF) 
-    fm1 <- occu(~ elev ~ elev, sp_UMF)
-    fm2 <- occu(~ elev ~ slope, sp_UMF)
-    # fm3 <- occu(~ elev ~ dist_rd, sp_UMF)
-    fm4 <- occu(~ elev ~ dist_def, sp_UMF)
-    # fm5 <- occu(~ elev ~ dist_def+in_out, sp_UMF)
-    fm6 <- occu(~ basal_a ~ basal_a, sp_UMF)#, starts = c(0.1,0.1,0.1,0.1))
-    fm7 <- occu(~ basal_a ~ elev, sp_UMF)
-    fm8 <- occu(~ basal_a ~ slope, sp_UMF)
-    # fm9 <- occu(~ basal_a ~ dist_rd, sp_UMF)
-    fm10<- occu(~ basal_a ~ dist_def, sp_UMF)
-    # fm11 <- occu(~ basal_a ~ dist_def+in_out, sp_UMF)
-    fm12 <- occu(~ canopy_c ~ canopy_c, sp_UMF, starts = c(0.1,0.1,0.1,0.1))
-    fm13 <- occu(~ canopy_c ~ elev, sp_UMF)
-    fm14 <- occu(~ canopy_c ~ slope, sp_UMF)
-    # fm15 <- occu(~ canopy_c ~ in_out, sp_UMF)
-    fm16 <- occu(~ canopy_c ~ dist_def, sp_UMF, starts = c(0.1,0.1,0.1,0.1))
-    fm17 <- occu(~ canopy_c ~ dist_def+slope, sp_UMF)#, starts = c(0.1,0.1,0.1,0.1,0.1,0.1))
+     #  covariates of detection and occupancy in that order.
+      fm0 <- occu(~ 1 ~ 1, sp_UMF) 
+      fm1 <- occu(~ elev ~ elev, sp_UMF)
+      fm2 <- occu(~ elev ~ slope, sp_UMF)
+      fm3 <- occu(~ elev ~ dist_def, sp_UMF)
+      fm4 <- occu(~ elev ~ dist_rd, sp_UMF)
+      fm5 <- occu(~ elev ~ canopy_h, sp_UMF)
+      fm6 <- occu(~ elev ~ canopy_c, sp_UMF, method="SANN")
+      fm7 <- occu(~ elev ~ basal_a, sp_UMF)
+      fm8 <- occu(~ elev ~ in_out, sp_UMF)
+      fm9 <- occu(~ basal_a ~ elev, sp_UMF)
+      fm10 <- occu(~ basal_a ~ slope, sp_UMF)
+      fm11 <- occu(~ basal_a ~ dist_def, sp_UMF)
+      fm12 <- occu(~ basal_a ~ dist_rd, sp_UMF)
+      fm13 <- occu(~ basal_a ~ canopy_h, sp_UMF)
+      fm14 <- occu(~ basal_a ~ canopy_c, sp_UMF, method="SANN")
+      fm15 <- occu(~ basal_a ~ basal_a, sp_UMF)
+      fm16 <- occu(~ basal_a ~ in_out, sp_UMF)
 
-        models <- fitList(
-      'p(.)psi(.)' = fm0,
-      'p(elev)psi(elev)' = fm1,
-      'p(elev)psi(slope)' = fm2,
-      # 'p(elev)psi(dist_rd)' = fm3,
-      'p(elev)psi(dist_def)' = fm4,
-      # 'p(elev)psi(dist_def+dist_rd)' = fm5,
-      'p(basal_a)psi(basal_a)' = fm6,
-      'p(basal_a)psi(elev)' = fm7,
-      'p(basal_a)psi(slope)' = fm8,
-      # 'p(basal_a)psi(dist_rd)' = fm9,
-      'p(basal_a)psi(dist_def)' = fm10,
-      # 'p(basal_a)psi(dist_def+in_out)' = fm11,
-      'p(canopy_c)psi(canopy_c)' = fm12,
-      'p(canopy_c)psi(elev)' = fm13,
-      'p(canopy_c)psi(slope)' = fm14,
-      # 'p(canopy_c)psi(in_out)' = fm15,
-      'p(canopy_c)psi(dist_def)' = fm16,
-      'p(canopy_c)psi(dist_def+slope)' = fm17
+      
+      # put the names of each model
+      models <- fitList(
+        'p(.)psi(.)' = fm0,
+        'p(elev)psi(elev)' = fm1,
+        'p(elev)psi(slope)' = fm2,
+        'p(elev)psi(dist_def)' = fm3,
+        'p(elev)psi(dist_rd)' = fm4,
+        'p(elev)psi(canopy_h)' = fm5,
+        'p(elev)psi(canopy_c)' = fm6,
+        'p(elev)psi(basal_a)' = fm7,
+        'p(elev)psi(in_out)' = fm8,
+        'p(basal_a)psi(elev)' = fm9,
+        'p(basal_a)psi(slope)' = fm10,
+        'p(basal_a)psi(dist_def)' = fm11,
+        'p(basal_a)psi(dist_rd)' = fm12,
+        'p(basal_a)psi(canopy_h)' = fm13,
+        'p(basal_a)psi(canopy_c)' = fm14,
+        'p(basal_a)psi(basal_a)' = fm15,
+        'p(basal_a)psi(in_out)' = fm16
       )
+      
+      ms <- modSel(models)
+      # (ms)
+
    
- modSel(models)  
+ # modSel(models)  
     
     
-  #colnames(newCovs)<- c("site.canopy.s", "date", "time")
-  E.p <- predict(fm14, type="det", newdata=newdata.out, appendData=TRUE)# type puede ser:det psi, col, ext
-  # head(E.p)
+      newdata.in <- data.frame(basal_a=seq(-1.1172, 4.1706, length=100), 
+                          elev=seq(-1.95634, 1.67393, length=100),
+                          canopy_h=seq(-1.5119, 2.8474, length=100),
+                          canopy_c=seq(-1.9770, 1.6965, length=100),
+                          slope=seq(-1.57302, 2.14090 , length=100),
+                          dist_def=seq(-1.3035 , 2.5716, length=100), 
+                          dist_rd=seq(-1.015052, 2.829409, length=100),
+                          in_out = c(rep("in", 100)))#, rep("out", 1) ) ) #
+    
+    newdata.out <- data.frame(basal_a=seq(-1.1172, 4.1706, length=100), 
+                          elev=seq(-1.95634, 1.67393, length=100),
+                          canopy_h=seq(-1.5119, 2.8474, length=100),
+                          canopy_c=seq(-1.9770, 1.6965, length=100),
+                          slope=seq(-1.57302, 2.14090 , length=100),
+                          dist_def=seq(-1.3035 , 2.5716, length=100),
+                          dist_rd=seq(-1.015052, 2.829409, length=100),
+                          in_out = c(rep("out", 100))) #, rep("in", 1) ))
+    
+    
+    
+#     predict(fm12, type="state", newdata=newdata.in)
+#     predict(fm12, type="state", newdata=newdata.out)
+#     
+#     predict(fm12, type="det", newdata=newdata)
+#     
+    both.in_out<-rbind(newdata.in,newdata.out)
   
   
-  # Plot it############## detectability
-  plot(Predicted ~ canopy_c, E.p, type="l", ylim=c(-0.1,1),
-       xlab="Canopy cover (standardized)",
-       ylab="Expected detectability")# Expected det
-  lines(lower ~ canopy_c, E.p, type="l", col=gray(0.5))
-  lines(upper ~ canopy_c, E.p, type="l", col=gray(0.5))
- 
-############## detectability
-     
-  # Plot it again, but this time convert the x-axis back to original scale
-  plot(Predicted ~ canopy_c, E.p, type="l", ylim=c(0,1), col="blue",
-       xlab="Canopy cover (%)",
+  
+  newdata2 = data.frame(elev = 0,  #mean(cam.and.covs.scaled$basal_a), 
+                        basal_a = 0, # mean(cam.and.covs.scaled$elev),
+                        in_out = c("in", "out"))
+  pred.data1<-newdata2
+  
+  newdata3 = data.frame(basal_a = seq(from=min(cam.and.covs.scaled$basal_a), 
+                                      to=max(cam.and.covs.scaled$basal_a), 
+                                      length.out = 100),
+                        elev = seq(from=max(cam.and.covs.scaled$elev), 
+                                      to=min(cam.and.covs.scaled$elev), 
+                                      length.out = 100)) 
+                        #in_out = c("in", "out"))
+  
+  pred.data2<-newdata3
+  
+  newdata4 = data.frame(basal_a = 0,
+                        elev = seq(from=max(cam.and.covs.scaled$elev), 
+                                      to=min(cam.and.covs.scaled$elev), 
+                                      length.out = 100)) 
+  newdata5 = data.frame(basal_a = seq(from=max(cam.and.covs.scaled$elev), 
+                                      to=min(cam.and.covs.scaled$elev), 
+                                      length.out = 100),
+                        elev = 0) 
+                        #in_out = c("in", "out")
+  
+  ########################################## 
+  ########### Model averagign
+  ##########################################   
+# ##model list
+ Cands2 <- list(fm14, fm6)
+ Modnames2 <- c("p(basal_a)psi(canopy_c)", "p(elev)psi(canopy_c)")
+
+evidence(aic.table = aictab(cand.set = Cands2, modnames = Modnames2))
+
+##compute model-averaged predictions of abundance for values of in_out
+output.psi <- modavgPred(cand.set = Cands2, 
+                     modnames = Modnames2, 
+                     newdata = newdata.out, 
+                     parm.type = "detect", #"det"), # or "psi" 
+                     type = "response")
+out.preds.logit <- modavgPred(cand.set = Cands2, 
+                     modnames = Modnames2, 
+                     newdata = newdata.out, 
+                     parm.type = "detect", # "psi"), #detect"), # or "detect"
+                     type = "link")
+
+# # To obtain the coeficient given a model-averaged estimate of covariates
+# modavg(cand.set=Cands2, parm="basal_a", modnames=Modnames2, second.ord = TRUE, nobs = NULL, uncond.se = "revised", conf.level = 0.95, 
+#        exclude = NULL, warn = F, c.hat = 1, parm.type = "detect")
+
+avg_result<-output.psi$matrix.output[, c("mod.avg.pred", "uncond.se", "lower.CL", "upper.CL")]
+
+pred.data26<-newdata.out
+##add predictions to data set to keep everything in the same place
+pred.data26$fit <- avg_result[,1]
+pred.data26$se.fit <- avg_result[,2]
+##compute 95% CI on logit scale, then back transform 
+##these asymmetric CI's have better properties
+pred.data26$low95 <- plogis(out.preds.logit$mod.avg.pred - 
+                          1.96 * out.preds.logit$uncond.se)
+pred.data26$upp95 <- plogis(out.preds.logit$mod.avg.pred + 
+                          1.96 * out.preds.logit$uncond.se)
+
+# ################
+
+  
+  
+  
+  
+  
+# pred_p10<-predict(fm6, type="det",newdata=newdata.out, appendData=TRUE) # or state
+  
+  
+  ########################################## 
+  ########### plot  detectability
+  ########################################## 
+
+png(file = "C:/Users/Diego/Documents/CodigoR/Pacoche_unmakerd/fig/p_L_pardalis.png", width = 1200, height = 1200, res = 300)
+par(mar = c(5, 4, 2, 2) + 0.1)
+
+  plot(fit ~ elev, pred.data26, type="l", ylim=c(-0.1,1), col="blue",
+       xlab="Elevation (m)",
        ylab="Detectability",
-       xaxt="n")
-  xticks <- -1:2 #  see wich number equals to var name using: colnames(cam.and.covs)
+       xaxt="n")# 
+  lines(low95 ~ elev, pred.data26, type="l", col=gray(0.5))
+  lines(upp95 ~ elev, pred.data26, type="l", col=gray(0.5))
+ 
+  xticks <- -2:2 # see min(cam.and.covs.scaled$elev) #  see wich number equals to var name using: colnames(cam.and.covs)
+  xlabs <- xticks*sd(cam.and.covs[,8]) + mean(cam.and.covs[,8]) #Use the mean and sd of original value to change label name
+  axis(1, at=xticks, labels=round(xlabs, 1))
+##turn off graphics device
+dev.off( )
+   ########################################## 
+  ########### plot  occupancy
+  ##########################################  
+# ##compute model-averaged predictions of abundance for values of in_out
+# output.psi <- modavgPred(cand.set = Cands2, 
+#                      modnames = Modnames2, 
+#                      newdata = newdata.out, 
+#                      parm.type = "psi", #"det"), # or "detect"
+#                      type = "response")
+# out.preds.logit <- modavgPred(cand.set = Cands2, 
+#                      modnames = Modnames2, 
+#                      newdata = newdata.out, 
+#                      parm.type = "psi", # "psi"), #detect"), # or "detect"
+#                      type = "link")
+# avg_result<-output.psi$matrix.output[, c("mod.avg.pred", "uncond.se", "lower.CL", "upper.CL")]
+# 
+# pred.data12<-newdata.out
+# ##add predictions to data set to keep everything in the same place
+# pred.data12$fit <- avg_result[,1]
+# pred.data12$se.fit <- avg_result[,2]
+# ##compute 95% CI on logit scale, then back transform 
+# ##these asymmetric CI's have better properties
+# pred.data12$low95 <- plogis(out.preds.logit$mod.avg.pred - 
+#                           1.96 * out.preds.logit$uncond.se)
+# pred.data12$upp95 <- plogis(out.preds.logit$mod.avg.pred + 
+#                           1.96 * out.preds.logit$uncond.se)
+
+################
+# E.p2 <- predict(fm6, type="state", newdata=newdata.out, appendData=TRUE)# type puede ser:det
+output.psi <- modavgPred(cand.set = Cands2, 
+                     modnames = Modnames2, 
+                     newdata = newdata.out,
+                     # parm="dist_rd",
+                     parm.type = "psi", #"det"), # or "psi" 
+                     type = "response")
+out.preds.logit <- modavgPred(cand.set = Cands2, 
+                     modnames = Modnames2, 
+                     newdata = newdata.out, 
+                     parm.type = "psi", # "psi"), #detect"), # or "detect"
+                     type = "link")
+avg_result<-output.psi$matrix.output[, c("mod.avg.pred", "uncond.se", "lower.CL", "upper.CL")]
+
+pred.data26<-newdata.out
+##add predictions to data set to keep everything in the same place
+pred.data26$fit <- avg_result[,1]
+pred.data26$se.fit <- avg_result[,2]
+##compute 95% CI on logit scale, then back transform 
+##these asymmetric CI's have better properties
+pred.data26$low95 <- plogis(out.preds.logit$mod.avg.pred - 
+                          1.96 * out.preds.logit$uncond.se)
+pred.data26$upp95 <- plogis(out.preds.logit$mod.avg.pred + 
+                          1.96 * out.preds.logit$uncond.se)
+
+png(file = "C:/Users/Diego/Documents/CodigoR/Pacoche_unmakerd/fig/occu_D_punctata.png", width = 1200, height = 1200, res = 300)
+par(mar = c(5, 4, 2, 2) + 0.1)
+
+  plot(fit ~ canopy_c, pred.data26, type="l", ylim=c(-0.1,1), col="blue",
+       xlab="Canopy cover",
+       ylab="Occupancy probability",
+       xaxt="n")# 
+  lines(low95 ~ canopy_c, pred.data26, type="l", col=gray(0.5))
+  lines(upp95 ~ canopy_c, pred.data26, type="l", col=gray(0.5))
+ 
+  xticks <- -1.5:2 # see min(cam.and.covs.scaled$elev) #  see wich number equals to var name using: colnames(cam.and.covs)
   xlabs <- xticks*sd(cam.and.covs[,3]) + mean(cam.and.covs[,3]) #Use the mean and sd of original value to change label name
   axis(1, at=xticks, labels=round(xlabs, 1))
-  lines(lower ~ canopy_c, E.p, type="l", col=gray(0.5))
-  lines(upper ~ canopy_c, E.p, type="l", col=gray(0.5))
-  
-############## occupancy 
-  E.p2 <- predict(fm14, type="state", newdata=newdata.out, appendData=TRUE)# type puede ser:det state
-  # head(E.p)
-  
-  # Plot it standarzed
-  plot(Predicted ~ slope, E.p2, type="l", ylim=c(0,1),
-       xlab="Slope (standardized)",
-       ylab="Expected Occupancy")# Expected det
-  lines(lower ~ slope, E.p2, type="l", col=gray(0.5))
-  lines(upper ~ slope, E.p2, type="l", col=gray(0.5))
-  
-  # Plot it again, but this time convert the x-axis back to original scale # see names(cam.and.covs)
-  plot(Predicted ~ slope, E.p2, type="l", ylim=c(0,1), col="blue",
-       xlab="Slope",
-       ylab="Occupancy",
-       xaxt="n")
-  xticks <- -1:2
-  xlabs <- xticks*sd(cam.and.covs[,9]) + mean(cam.and.covs[,9]) #Use the mean and sd of original value to change label name
-  axis(1, at=xticks, labels=round(xlabs, 1))
-  lines(lower ~ slope, E.p2, type="l", col=gray(0.5))
-  lines(upper ~ slope, E.p2, type="l", col=gray(0.5))
-  
-  
-############################ 
-########## map
-############################ 
-  
-# dist_def_map.sd<- cellStats(dist.def_paco, 'sd') 
-# dist_def_map.mean<- cellStats(dist.def_paco, 'mean')
-# g.dist_def_map<-(dist.def_paco - dist_def_map.mean)/dist_def_map.sd #map Scaled by sd
-# s <- raster(nrow=600, ncol=400) # remustrea a mas chico
-# s <- resample(g.dist_def_map, s, method='bilinear')
-# dist_def.stack<-stack(g.dist_def_map)
-# names(dist_def.stack)<-"dist_def"
-# # psioccu_cuniculus <- predict(fm16, type="state", newdata=dist_def.stack)# type puede # take a while patience it is a large file!!! 10 x 10 m = 70 Megas
+##turn off graphics device
+dev.off( )
 
-library(spatial.tools)
+# library(spatial.tools)
 #######################################
 ### Occupancy map
 #######################################  
@@ -2902,7 +3057,7 @@ library(spatial.tools)
 # # of this script, if you do NOT want gfcanalysis to run in parallel.
 # if (require(snow)) beginCluster()    
 # ###### Predict
-psioccu_lepoardus_pardalis <- predict(fm14, type="state", newdata=cov.stack.standarized)# type puede # take a while patience it is a large file!!! 10 x 10 km = 70 Megas
+# psioccu_lepoardus_pardalis <- predict(fm14, type="state", newdata=cov.stack.standarized)# type puede # take a while patience it is a large file!!! 10 x 10 km = 70 Megas
 # # psioccu_dasypus <- predict_rasterEngine(fm16, type="state",newdata=dist_def.stack)
 # 
 # # Stop the parallel processing cluster
@@ -2913,8 +3068,8 @@ psioccu_lepoardus_pardalis <- predict(fm14, type="state", newdata=cov.stack.stan
 # # plot(psioccu_cuniculs) # take a while patience it is a large file!!! 10 x 10 km = 70 Megas
 # 
 # plot(psioccu_eira[[1]])
-library(rasterVis)
-levelplot(psioccu_lepoardus_pardalis[[1]], par.settings=RdBuTheme) #occupancy
+# library(rasterVis)
+# levelplot(psioccu_lepoardus_pardalis[[1]], par.settings=RdBuTheme) #occupancy
 # 
 # plot(cam.cords, add=T, col="red")
 # title(main="Occupancy Eira")
