@@ -1444,9 +1444,9 @@ E.p2 <- predict(fm6, type="state", newdata=newdata.out, appendData=TRUE)# type p
 png(file = "C:/Users/Diego/Documents/CodigoR/Pacoche_unmakerd/fig/occu_E_barbara1.png", width = 1200, height = 1200, res = 300)
 par(mar = c(5, 4, 2, 2) + 0.1)
 
-  plot(Predicted ~ elev, E.p2, type="l", ylim=c(-0.1,1), col="blue",
+  plot(Predicted ~ canopy_c, E.p2, type="l", ylim=c(-0.1,1), col="blue",
        xlab="Canopy cover",
-       ylab="Detectability",
+       ylab="Occupancy probability",
        xaxt="n")# 
   lines(lower ~ canopy_c, E.p2, type="l", col=gray(0.5))
   lines(upper ~ canopy_c, E.p2, type="l", col=gray(0.5))
