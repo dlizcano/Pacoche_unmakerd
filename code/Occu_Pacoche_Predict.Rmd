@@ -1228,7 +1228,7 @@ png(file = "C:/Users/Diego/Documents/CodigoR/Pacoche_unmakerd/fig/p_C_paca2.png"
 par(mar = c(5, 4, 2, 2) + 0.1)
 
   plot(fit ~ elev, pred.data2, type="l", ylim=c(-0.1,1), col="blue",
-       xlab="Elevation",
+       xlab="Elevation (m)",
        ylab="Detection probability",
        xaxt="n")# 
   lines(low95 ~ elev, pred.data2, type="l", col=gray(0.5))
