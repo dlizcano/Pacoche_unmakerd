@@ -340,6 +340,7 @@ pacoche.arr_1_3<-pacoche.raw[c(-index_4_1,
     
     # counting how many (total) records per species by all days
     cont.per.sp<-data.frame(row.names = sp.names)
+    presence.per.sp<-matrix(nrow = 40, ncol = 63)
     row.per.sp<-as.data.frame(matrix(nrow = length(sp.names), ncol=c(63)))
     col.per.sp<-as.data.frame(matrix(nrow = length(sp.names), ncol=c(194)))
     rownames(row.per.sp)<-sp.names
@@ -351,11 +352,18 @@ pacoche.arr_1_3<-pacoche.raw[c(-index_4_1,
       row.per.sp[i,]<-apply(mat.per.sp[[i]],1, function(x) sum(x, na.rm=T))
       # row.per.sp[i,which(row.per.sp[i,]>0)]<-1 # convert to presence absence  1 and 0
       col.per.sp[i,]<-apply(mat.per.sp[[i]],2, function(x) sum(x, na.rm=T))
+      presence.per.sp[i,]<- apply(row.per.sp[i,], 2, function(x) {x[x >= 1] <- 1; x})
       
     }
     
+    
+    
+    naive_occu<-apply(presence.per.sp,1,sum,na.rm=T)/apply(presence.per.sp,1,function(x){length(which(!is.na(x)))}) # function from Jorge
+    
+    cont.per.sp$naive_occu<-naive_occu
     cont.per.sp$especie<-rownames(cont.per.sp)
-    colnames(cont.per.sp)<-c("Numero_de_registros","especie")
+    colnames(cont.per.sp)<-c("Numero_de_registros","naive_occu", "especie")
+    
     # xtable(arrange(df = cont.per.sp, desc(Numero_de_registros)))
     kable(arrange(cont.per.sp, desc(cont.per.sp[,1])))
     
@@ -1247,7 +1255,7 @@ dev.off( )
 
 
 
-## El Cabeza de Mate (_Dasypus novemcinctus_)
+## El Armadillo (_Dasypus novemcinctus_)
 ### Matriz de datos colapsada a 15 dias
 
 ```{r mat_sp14,cache=TRUE,warning=FALSE,eval=TRUE, echo=FALSE,fig.height=4,fig.width=7}
