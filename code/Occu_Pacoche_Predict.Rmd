@@ -367,6 +367,9 @@ pacoche.arr_1_3<-pacoche.raw[c(-index_4_1,
     # xtable(arrange(df = cont.per.sp, desc(Numero_de_registros)))
     kable(arrange(cont.per.sp, desc(cont.per.sp[,1])))
     
+    # write.csv(cont.per.sp, "table/naive_occu.csv") # write table
+    
+    
     
     ```
     
@@ -1092,6 +1095,7 @@ library(AICcmodavg)
   
   newdata2 = data.frame(basal_a = 0,  #mean(cam.and.covs.scaled$basal_a), 
                         elev = 0, # mean(cam.and.covs.scaled$elev),
+                        canopy_c = 0, # mean
                         in_out = c("in", "out"))
   pred.data1<-newdata2
   
@@ -1112,8 +1116,8 @@ library(AICcmodavg)
                         #in_out = c("in", "out"))
   
   ##model list
-Cands2 <- list(fm16, fm8)
-Modnames2 <- c("p(basal_a)psi(in_out)", "p(elev)psi(in_out)")
+Cands2 <- list(fm16, fm8,  fm14)
+Modnames2 <- c("p(basal_a)psi(in_out)", "p(elev)psi(in_out)", "p(basal_a)psi(canopy_c)" )
 
 evidence(aic.table = aictab(cand.set = Cands2, modnames = Modnames2))
 
