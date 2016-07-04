@@ -3483,6 +3483,45 @@ par(mar = c(5, 4, 2, 2) + 0.1)
 ##turn off graphics device
 dev.off( )
 
+
+########################################
+### 3. Drape in surface 
+## with colorBrewer "spectral" palette
+########################################
+
+predictions1minn = data.frame(x = dataminn.pr$ExactSTminn*sd.ndviminn + mean.ndviminn,##log para back transform ?
+                          y = dataminn.pr$WaterDistSTminn*sd.WaterDistminn + mean.WaterDistminn,##log para back transform ?
+                          #z = predichos$Predicted
+                          z = abs(xyzminn[,3])) 
+elevationminn.loess = loess(z ~ x*y, data = predictions1minn, degree = 2) #arma el grid 3d
+
+
+elevationminn.fit = expand.grid(list(x = seq(3763, 9242.212, 10), y=seq(9.950435, 3213.035, 10)))
+z = predict(elevationminn.loess, newdata = elevationminn.fit)
+elevationminn.fit$Height = as.numeric(z)
+library("scales")
+require(grDevices)
+mycolors<-colorRampPalette(c("red", "white", "blue"))
+mycolors<-colorRampPalette(brewer.pal(11, 'RdYlGn')[2:10]) 
+
+levelplot(Height ~ x*y, data = elevation.fit,
+          xlab = "NDVI", ylab = "Distance to water",
+          main = "Surface Model abundance(NDVI*Distance to Water)",
+          col.regions = mycolors)
+
+contourplot(Height~ x*y, data = elevation.fit,
+            cuts = 12,
+            xlab = "NDVI", ylab = "Distance to water",
+            main = "Surface Model abundance(NDVI*Distance to Water)",
+            region = TRUE,
+            col.regions = mycolors)
+
+########################################
+
+
+
+
+
 # library(spatial.tools)
 #######################################
 ### Occupancy map
